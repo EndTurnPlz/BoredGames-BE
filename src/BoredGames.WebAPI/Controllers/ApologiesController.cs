@@ -1,6 +1,7 @@
+using BoredGames.Apologies;
+using BoredGames.Apologies.EndpointObjects;
+using BoredGames.Common;
 using Microsoft.AspNetCore.Mvc;
-using BoredGames.GamesLib.Apologies;
-using BoredGames.GamesLib.Common;
 
 namespace BoredGames.Controllers;
 
@@ -10,67 +11,45 @@ namespace BoredGames.Controllers;
 public class ApologiesController : ControllerBase
 {
     [HttpGet("drawCard")]
-    public IActionResult DrawCard([FromRoute] Guid playerId)
+    public ActionResult<DrawCardResponse> DrawCard([FromRoute] Guid playerId)
     {
-        if (PlayerValidityErrors(playerId) is not null and var errResult)
-        {
-            return errResult;
-        }
-        
-        var game = (ApologiesGame) Player.GetPlayer(playerId)!.Game;
-        return Ok(game.DrawCard());
-    }
-    
-    [HttpPost("movePawn")]
-    public IActionResult MovePawn([FromRoute] Guid playerId)
-    {
-        if (PlayerValidityErrors(playerId) is not null and var errResult)
-        {
-            return errResult;
-        }
+        if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
 
         var game = (ApologiesGame)Player.GetPlayer(playerId)!.Game;
-        return Ok(game.MovePawn());
+        if (game.DrawCard(Player.GetPlayer(playerId)!) is not { } moveList) 
+            return Problem(statusCode: 422, detail: "Incorrect Player");
+
+        return Ok(moveList);
     }
-    
-    [HttpGet("pullGameState")]
-    public IActionResult FetchGameState([FromRoute] Guid playerId)
+
+    [HttpPost("movePawn")]
+    public ActionResult MovePawn([FromRoute] Guid playerId, [FromBody] MovePawnRequest req)
     {
-        if (PlayerValidityErrors(playerId) is not null and var errResult)
-        {
-            return errResult;
-        }
-        
+        if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
+
         var game = (ApologiesGame)Player.GetPlayer(playerId)!.Game;
-        return Ok(game.GetCurrentState());
-    }
-    
-    [HttpPut("playerHeartbeat")]
-    public IActionResult PlayerHeartbeat([FromRoute] Guid playerId, [FromBody] int view)
-    {
-        if (PlayerValidityErrors(playerId) is not null and var errResult)
-        {
-            return errResult;
-        }
-        
-        Player.GetPlayer(playerId)!.Heartbeat(view);
+        if (!game.MovePawn(req, Player.GetPlayer(playerId)!)) return BadRequest("Invalid move");
+
         return Ok();
     }
 
-    private IActionResult? PlayerValidityErrors(Guid playerId)
+    [HttpGet("pullGameState")]
+    public ActionResult<PullGameStateResponse> PullGameState([FromRoute] Guid playerId)
     {
-        if (Player.GetPlayer(playerId) is null)
-        {
-            return BadRequest("Invalid player id");
-        }
+        if (PlayerValidityErrors(playerId) is BadRequestObjectResult errResult)
+            return errResult;
+
+        var game = (ApologiesGame)Player.GetPlayer(playerId)!.Game;
+        return Ok(game.PullCurrentState());
+    }
+
+    private ActionResult? PlayerValidityErrors(Guid playerId)
+    {
+        if (Player.GetPlayer(playerId) is null) return BadRequest("Invalid player id");
 
         var client = Player.GetPlayer(playerId)!;
-        if (client.Game is not ApologiesGame)
-        {
-            return BadRequest("Invalid player id");
-        }
-        
-        if (!client.HasCurrentView()) return Conflict(client.Game.CurrentView);
+        if (client.Game is not ApologiesGame) return BadRequest("Invalid player id");
+        if (!client.Game.HasStarted) return BadRequest("Game has not started yet");
 
         return null;
     }

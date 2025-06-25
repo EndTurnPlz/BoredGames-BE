@@ -13,7 +13,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\BoredGames.GamesLib\BoredGames.GamesLib.csproj" />
+        <ProjectReference Include="..\BoredGames.Apologies\BoredGames.Apologies.csproj" />
+        <ProjectReference Include="..\BoredGames.Common\BoredGames.Common.csproj"/>
     </ItemGroup>
 
 
