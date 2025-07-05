@@ -1,4 +1,5 @@
 using BoredGames.Common;
+using BoredGames.Common.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BoredGames.Controllers;
@@ -31,7 +32,16 @@ public class PlayerController : ControllerBase
         {
             Username = playerName
         };
-        game.JoinGame(player);
+
+        try
+        {
+            game.JoinGame(player);
+        }
+        catch (JoinGameException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        
         return Ok(new { playerId });
     }
 

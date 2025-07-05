@@ -2,6 +2,7 @@ using BoredGames.Apologies.Board;
 using BoredGames.Apologies.EndpointObjects;
 using BoredGames.Apologies.Deck;
 using BoredGames.Common;
+using BoredGames.Common.Exceptions;
 
 namespace BoredGames.Apologies;
 
@@ -19,8 +20,10 @@ public sealed class ApologiesGame : AbstractGame
     
     public override void JoinGame(Player player)
     {
-        if (GamePhase != Phase.Lobby) return;
-        if (_players.Contains(player)) return;
+        if (GamePhase != Phase.Lobby) throw new JoinGameException("Game already started");
+        if (_players.Contains(player)) throw new JoinGameException("Player already joined");
+        if (_players.Count == 4) throw new JoinGameException("Game is full");
+        
         _players.Add(player);
         player.Game = this;
         CurrentView += 1;
