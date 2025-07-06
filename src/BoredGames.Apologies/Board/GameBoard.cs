@@ -235,11 +235,11 @@ public class GameBoard
     }
 
     [Pure]
-    private List<BoardTile> FindTileForForwardMove(BoardTile startingTile, CardDeck.CardTypes card, int playerSide)
+    private List<BoardTile> FindTileForForwardMove(BoardTile sourceTile, CardDeck.CardTypes card, int playerSide)
     {
         if (card is CardDeck.CardTypes.Apologies or CardDeck.CardTypes.Four) return [];
 
-        var current = startingTile;
+        var current = sourceTile;
         for (var i = 0; i < (int)card; i++)
         {
             if (current is not WalkableTile currentWalkable) return [];
@@ -250,11 +250,11 @@ public class GameBoard
     }
 
     [Pure]
-    private List<BoardTile> FindTileForBackwardMove(BoardTile startingTile, CardDeck.CardTypes card, int playerSide)
+    private List<BoardTile> FindTileForBackwardMove(BoardTile sourceTile, CardDeck.CardTypes card, int playerSide)
     {
         if (card is not CardDeck.CardTypes.Ten and not CardDeck.CardTypes.Four) return [];
 
-        var current = startingTile;
+        var current = sourceTile;
         var dist = card is CardDeck.CardTypes.Four ? 4 : 1;
         for (var i = 0; i < dist; i++)
         {
@@ -266,19 +266,19 @@ public class GameBoard
     }
 
     [Pure]
-    private List<BoardTile> FindTileForExitStartMove(BoardTile startingTile, CardDeck.CardTypes card, int playerSide)
+    private List<BoardTile> FindTileForExitStartMove(BoardTile sourceTile, CardDeck.CardTypes card, int playerSide)
     {
         if (card is not CardDeck.CardTypes.One and not CardDeck.CardTypes.Two) return [];
-        if (startingTile is not StartTile tile) return [];
+        if (sourceTile is not StartTile tile) return [];
         
         if (!NoTeammateOnTargetTile(tile.NextTile, playerSide)) return [];
         return [tile.NextTile];
     }
 
     [Pure]
-    private List<BoardTile> FindTilesForApologiesMove(BoardTile startingTile, CardDeck.CardTypes card, int playerSide)
+    private List<BoardTile> FindTilesForApologiesMove(BoardTile sourceTile, CardDeck.CardTypes card, int playerSide)
     {
-        if (startingTile is not StartTile) return [];
+        if (sourceTile is not StartTile) return [];
         if (card is not CardDeck.CardTypes.Apologies) return [];
 
         List<BoardTile> targets = [];
@@ -292,9 +292,9 @@ public class GameBoard
     }
 
     [Pure]
-    private List<BoardTile> FindTilesForSwapMove(BoardTile startingTile, CardDeck.CardTypes card, int playerSide)
+    private List<BoardTile> FindTilesForSwapMove(BoardTile sourceTile, CardDeck.CardTypes card, int playerSide)
     {
-        if (startingTile is not BasicTile) return [];
+        if (sourceTile is not BasicTile) return [];
         if (card is not CardDeck.CardTypes.Eleven) return [];
 
         List<BoardTile> targets = [];
@@ -307,21 +307,39 @@ public class GameBoard
     }
 
     [Pure]
-    private List<(BoardTile, int)> FindTilesForSplitMove(BoardTile startingTile, CardDeck.CardTypes card, int playerSide)
+    private List<(BoardTile, int)> FindTilesForSplitMove(BoardTile sourceTile, CardDeck.CardTypes card, int playerSide)
     {
         if (card is not CardDeck.CardTypes.Seven) return [];
 
         // Make sure there are at least 2 pawns on the board
         var walkableTileCount = PawnTiles[playerSide].Count(tile => tile is WalkableTile);
         if (walkableTileCount < 2) return [];
-
+        
+        // Get a set of possible split move distances by checking the other three pawns
+        HashSet<int> possibleDistances = [];
+        foreach (var pairPawnTile in PawnTiles[playerSide])
+        {
+            if (pairPawnTile == sourceTile) continue;
+            
+            var pairCurrent = pairPawnTile;
+            for (var p = 1; p < 7; p++)
+            {
+                if (pairCurrent is not WalkableTile pairCurrentWalkable) break;
+                pairCurrent = pairCurrentWalkable.EvaluateNextTile(playerSide);
+                
+                if (pairCurrent != sourceTile && !NoTeammateOnTargetTile(pairCurrent, playerSide)) continue;
+                possibleDistances.Add(7 - p);
+            }
+        }
+        
+        // Find the possible split moves based on the possible distances
         List<(BoardTile, int)> targets = [];
-        var current = startingTile;
+        var current = sourceTile;
         for (var p = 1; p < 7; p++)
         {
             if (current is not WalkableTile walkableTile) return targets;
             current = walkableTile.EvaluateNextTile(playerSide);
-            if (NoTeammateOnTargetTile(current, playerSide)) targets.Add((current, p));
+            if (possibleDistances.Contains(p) && NoTeammateOnTargetTile(current, playerSide)) targets.Add((current, p));
         }
 
         return targets;
