@@ -12,6 +12,7 @@ public sealed class ApologiesGame : AbstractGame
     private readonly GameBoard _gameBoard = new();
     private readonly List<Player> _players = [];
     private Phase GamePhase { get; set; } = Phase.Lobby;
+    private MovePawnRequest? _lastCompletedMove = null;
 
     public ApologiesGame(Player host) : base(host)
     {
@@ -116,13 +117,15 @@ public sealed class ApologiesGame : AbstractGame
             CurrentView,
             (int)GamePhase,
             (int)_cardDeck.LastDrawn,
+            _lastCompletedMove,
             _players.IndexOf(Host),
-            _players.Select(p => p.Username).ToArray(),
+            _players.Select(p => p.Username),
+            _players.Select(p => p.IsConnected),
             _gameBoard.PawnTiles.Select(playerTiles => 
                 playerTiles.Select(
                     pawnTiles => pawnTiles.Name
-                ).ToArray()
-            ).ToArray()
+                )
+            )
         );
     }
 

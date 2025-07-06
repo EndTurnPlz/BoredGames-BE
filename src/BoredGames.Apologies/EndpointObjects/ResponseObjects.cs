@@ -7,9 +7,11 @@ public record PullGameStateResponse(
     int CurrentView,
     int GamePhase,
     int LastDrawnCard,
+    MovePawnRequest? LastCompletedMove,
     int Host,
-    string[] TurnOrder,
-    string[][] Pieces);
+    IEnumerable<string> TurnOrder,
+    IEnumerable<bool> PlayerConnectionStatus,
+    IEnumerable<IEnumerable<string>> Pieces);
 
 [UsedImplicitly]
 public record DrawCardResponse(
