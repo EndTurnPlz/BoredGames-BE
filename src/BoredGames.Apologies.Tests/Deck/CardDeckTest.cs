@@ -17,6 +17,7 @@ public class CardDeckTest
             .ToArray();
 
     private static readonly int ExpectedDeckSize = ValidCardTypes.Length * 4;
+    
     [Fact] 
     public void Constructor_ShouldCreateDeckWithCorrectCardDistribution()
     {
