@@ -121,9 +121,6 @@ public class GameBoard
             MoveEffect.Split6
         ];
         
-        // Make sure both moves have distinct destinations
-        if (firstMove.To == secondMove.To) return false;
-
         // Make sure both effects have split effects 
         var firstMoveEffectIndex = splitEffects.IndexOf(firstMoveEffect);
         var secondMoveEffectIndex = splitEffects.IndexOf(secondMoveEffect);
@@ -134,19 +131,23 @@ public class GameBoard
         if (firstMoveEffectIndex + secondMoveEffectIndex != 7) return false;
         
         // Find both source tiles
-        var firstPawnIndex = Array.FindIndex(PawnTiles, x => x.Any(y => y.Name == firstMove.To));
+        var firstPawnIndex = Array.FindIndex(PawnTiles[playerIndex], x => x.Name == firstMove.From);
         if (firstPawnIndex == -1) return false;
         ref var firstSourcePawn = ref PawnTiles[playerIndex][firstPawnIndex];
         var firstSourceTile = firstSourcePawn;
         
-        var secondPawnIndex = Array.FindIndex(PawnTiles, x => x.Any(y => y.Name == secondMove.To));
+        var secondPawnIndex = Array.FindIndex(PawnTiles[playerIndex], x => x.Name == secondMove.From);
         if (secondPawnIndex == -1) return false;
         ref var secondSourcePawn = ref PawnTiles[playerIndex][secondPawnIndex];
         var secondSourceTile = secondSourcePawn;
         
-        // Verify each move individually
+        // Verify each move individually and get their destination tiles
         var firstDestTile = ValidateAndFindDestinationTile(firstSourceTile, firstMove, CardDeck.CardTypes.Seven, playerIndex);
         var secondDestTile = ValidateAndFindDestinationTile(secondSourceTile, secondMove, CardDeck.CardTypes.Seven, playerIndex);
+
+        // Make sure both moves have distinct destinations (except for the home tile)
+        if (firstDestTile is WalkableTile && secondDestTile is WalkableTile && firstMove.To == secondMove.To)
+            return false;
         
         // Handle other pawns existing at the destination tiles.
         // It's ok if a destination is the other source since
@@ -165,7 +166,7 @@ public class GameBoard
         var isSwap = (MoveEffect)move.Effect == MoveEffect.Swap;
         
         // Find source tile
-        var pawnIndex = Array.FindIndex(PawnTiles, x => x.Any(y => y.Name == move.To));
+        var pawnIndex = Array.FindIndex(PawnTiles[playerIndex], x => x.Name == move.From);
         if (pawnIndex == -1) return false;
         ref var sourcePawn = ref PawnTiles[playerIndex][pawnIndex];
         var sourceTile = sourcePawn;
