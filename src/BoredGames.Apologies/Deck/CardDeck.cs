@@ -24,22 +24,6 @@ public class CardDeck
     public CardDeck()
     {
         ResetAndShuffle();
-        // TODO: get rid of this crap
-        _cards.Insert(0, CardTypes.Seven);
-        _cards.Insert(0, CardTypes.Two);
-        _cards.Insert(0, CardTypes.Two);
-        _cards.Insert(0, CardTypes.Four);
-        _cards.Insert(0, CardTypes.Four);
-        _cards.Insert(0, CardTypes.Four);
-        _cards.Insert(0, CardTypes.Four);
-        _cards.Insert(0, CardTypes.Two);
-        _cards.Insert(0, CardTypes.Two);
-        _cards.Insert(0, CardTypes.Two);
-        _cards.Insert(0, CardTypes.Four);
-        _cards.Insert(0, CardTypes.Four);
-        _cards.Insert(0, CardTypes.Four);
-        _cards.Insert(0, CardTypes.Four);
-        _cards.Insert(0, CardTypes.Two);
     }
 
     public CardTypes DrawCard()

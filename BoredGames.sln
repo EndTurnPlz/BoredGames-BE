@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoredGames.Common", "src\Bo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoredGames.Apologies", "src\BoredGames.Apologies\BoredGames.Apologies.csproj", "{564F57B0-21E8-48F6-88C6-B92D172F65B3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoredGames.UnitTests.Apologies", "tests\unit\BoredGames.UnitTests.Apologies\BoredGames.UnitTests.Apologies.csproj", "{8C5FE7D9-ECA9-4CC8-A3AB-1AC87CCEDF62}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,6 +26,10 @@ Global
 		{564F57B0-21E8-48F6-88C6-B92D172F65B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{564F57B0-21E8-48F6-88C6-B92D172F65B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{564F57B0-21E8-48F6-88C6-B92D172F65B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C5FE7D9-ECA9-4CC8-A3AB-1AC87CCEDF62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C5FE7D9-ECA9-4CC8-A3AB-1AC87CCEDF62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C5FE7D9-ECA9-4CC8-A3AB-1AC87CCEDF62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C5FE7D9-ECA9-4CC8-A3AB-1AC87CCEDF62}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
