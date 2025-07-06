@@ -15,9 +15,8 @@ public class GameBoard
         new("d_S", null!)
     ];
 
-    public BoardTile[][] PawnTiles { get; private set; }
-
-
+    public BoardTile[][] PawnTiles { get; }
+    
     private enum MoveEffect
     {
         Forward,
@@ -47,13 +46,13 @@ public class GameBoard
         ];
     }
 
-    public List<Moveset> GetValidMovesForPlayer(int playerSide, CardDeck.CardTypes card)
+    public List<Moveset> GetValidMovesForPlayer(int playerIndex, CardDeck.CardTypes card)
     {
         List<Moveset> movesets = [];
         var checkedStartWlog = false;
         for (var p = 0; p < 4; p++)
         {
-            var currentPawnTile = PawnTiles[playerSide][p];
+            var currentPawnTile = PawnTiles[playerIndex][p];
 
             // Pawns at the Home tile can't move
             if (currentPawnTile is HomeTile) continue;
@@ -68,22 +67,22 @@ public class GameBoard
 
             List<(BoardTile, MoveEffect)> validTiles =
             [
-                ..FindTileForForwardMove(currentPawnTile, card, playerSide)
+                ..FindTileForForwardMove(currentPawnTile, card, playerIndex)
                     .ConvertAll(tile => (tile, MoveEffect.Forward)),
                 
-                ..FindTileForBackwardMove(currentPawnTile, card, playerSide)
+                ..FindTileForBackwardMove(currentPawnTile, card, playerIndex)
                     .ConvertAll(tile => (tile, MoveEffect.Backward)),
                 
-                ..FindTileForExitStartMove(currentPawnTile, card, playerSide)
+                ..FindTileForExitStartMove(currentPawnTile, card, playerIndex)
                     .ConvertAll(tile => (tile, MoveEffect.ExitStart)),
                 
-                ..FindTilesForApologiesMove(currentPawnTile, card, playerSide)
+                ..FindTilesForApologiesMove(currentPawnTile, card, playerIndex)
                     .ConvertAll(tile => (tile, MoveEffect.Apologies)),
                 
-                ..FindTilesForSwapMove(currentPawnTile, card, playerSide)
+                ..FindTilesForSwapMove(currentPawnTile, card, playerIndex)
                     .ConvertAll(tile => (tile, MoveEffect.Swap)),
                 
-                ..FindTilesForSplitMove(currentPawnTile, card, playerSide)
+                ..FindTilesForSplitMove(currentPawnTile, card, playerIndex)
                     .Select(pair => (pair.Item1, MoveEffect.Split1 + pair.Item2 - 1))
             ];
 
@@ -100,7 +99,7 @@ public class GameBoard
         return movesets;
     }
 
-    public bool TryExecuteSplitMove(Move firstMove, Move secondMove, int player)
+    public bool TryExecuteSplitMove(Move firstMove, Move secondMove, int playerIndex)
     {
         var firstMoveEffect = (MoveEffect)firstMove.Effect;
         var secondMoveEffect = (MoveEffect)secondMove.Effect;
@@ -122,9 +121,6 @@ public class GameBoard
             MoveEffect.Split6
         ];
         
-        // Make sure both moves have distinct destinations
-        if (firstMove.To == secondMove.To) return false;
-
         // Make sure both effects have split effects 
         var firstMoveEffectIndex = splitEffects.IndexOf(firstMoveEffect);
         var secondMoveEffectIndex = splitEffects.IndexOf(secondMoveEffect);
@@ -134,71 +130,56 @@ public class GameBoard
         // Both move effects should have a sum of 7
         if (firstMoveEffectIndex + secondMoveEffectIndex != 7) return false;
         
-        // Move the pawns individually
-        var pawnTilesCopy = PawnTiles.Select(playerTiles => 
-            playerTiles.ToArray()).ToArray();
+        // Find both source tiles
+        var firstPawnIndex = Array.FindIndex(PawnTiles[playerIndex], x => x.Name == firstMove.From);
+        if (firstPawnIndex == -1) return false;
+        ref var firstSourcePawn = ref PawnTiles[playerIndex][firstPawnIndex];
+        var firstSourceTile = firstSourcePawn;
         
-        if (!TryExecuteMovePawn(firstMove, CardDeck.CardTypes.Seven, player) 
-            || !TryExecuteMovePawn(secondMove, CardDeck.CardTypes.Seven, player))
-        {
-            PawnTiles = pawnTilesCopy;
-            return false;
-        }
+        var secondPawnIndex = Array.FindIndex(PawnTiles[playerIndex], x => x.Name == secondMove.From);
+        if (secondPawnIndex == -1) return false;
+        ref var secondSourcePawn = ref PawnTiles[playerIndex][secondPawnIndex];
+        var secondSourceTile = secondSourcePawn;
+        
+        // Verify each move individually and get their destination tiles
+        var firstDestTile = ValidateAndFindDestinationTile(firstSourceTile, firstMove, CardDeck.CardTypes.Seven, playerIndex);
+        var secondDestTile = ValidateAndFindDestinationTile(secondSourceTile, secondMove, CardDeck.CardTypes.Seven, playerIndex);
 
+        // Make sure both moves have distinct destinations (except for the home tile)
+        if (firstDestTile is WalkableTile && secondDestTile is WalkableTile && firstMove.To == secondMove.To)
+            return false;
+        
+        // Handle other pawns existing at the destination tiles.
+        // It's ok if a destination is the other source since
+        // they will get overwritten later anyway.
+        ProcessDestinationTile(firstSourceTile, firstDestTile);
+        ProcessDestinationTile(secondSourceTile, secondDestTile);
+        
+        // Move both pawns to the destination tiles
+        firstSourcePawn = firstDestTile;
+        secondSourcePawn = secondDestTile;
         return true;
     }
 
     public bool TryExecuteMovePawn(Move move, CardDeck.CardTypes drawnCard, int playerIndex)
     {
-        var moveEffect = (MoveEffect)move.Effect;
-        var isSwap = moveEffect == MoveEffect.Swap;
-
-        // Check if the start tile exists
-        var sourceIndex = Array.FindIndex(PawnTiles[playerIndex], x => x.Name == move.From);
-        if (sourceIndex == -1) return false;
-        ref var sourcePawn = ref PawnTiles[playerIndex][sourceIndex];
+        var isSwap = (MoveEffect)move.Effect == MoveEffect.Swap;
+        
+        // Find source tile
+        var pawnIndex = Array.FindIndex(PawnTiles[playerIndex], x => x.Name == move.From);
+        if (pawnIndex == -1) return false;
+        ref var sourcePawn = ref PawnTiles[playerIndex][pawnIndex];
         var sourceTile = sourcePawn;
-
-        // Using the correct effect check if the end tile exists
-        var destTileCandidateList = moveEffect switch
-        {
-            MoveEffect.Forward => 
-                FindTileForForwardMove(sourceTile, drawnCard, playerIndex),
-            MoveEffect.Backward => 
-                FindTileForBackwardMove(sourceTile, drawnCard, playerIndex),
-            MoveEffect.ExitStart => 
-                FindTileForExitStartMove(sourceTile, drawnCard, playerIndex),
-            MoveEffect.Apologies => 
-                FindTilesForApologiesMove(sourceTile, drawnCard, playerIndex),
-            MoveEffect.Swap => 
-                FindTilesForSwapMove(sourceTile, drawnCard, playerIndex),
-            >= MoveEffect.Split1 and <= MoveEffect.Split6 =>
-                FindTilesForSplitMove(sourceTile, drawnCard, playerIndex).Select( x => x.Item1),
-            _ => 
-                throw new Exception("Invalid move effect")
-        };
-
-        var destTile = destTileCandidateList.FirstOrDefault(x => x.Name == move.To);
-        if (destTile is null) return false;
-
-        // Check if any pawns occupy the destination tile
-        if (destTile is WalkableTile)
-        {
-            var destPlayerIndex = Array.FindIndex(PawnTiles, x => x.Any(y => y.Name == move.To));
-            
-            if (destPlayerIndex != -1)
-            {
-                var destPawnIndex = Array.FindIndex(PawnTiles[destPlayerIndex], x => x.Name == move.To);
-                ref var destPawn = ref PawnTiles[destPlayerIndex][destPawnIndex];
-            
-                destPawn = isSwap ? sourceTile : _startTiles[destPlayerIndex];
-            }
-        } 
-            
+        
+        // Verify the destination and handle if another pawn exists there
+        var destTile = ValidateAndFindDestinationTile(sourceTile, move, drawnCard, playerIndex);
+        ProcessDestinationTile(sourceTile, destTile, isSwap);
+        
+        // Move the pawn to the destination
         sourcePawn = destTile;
         return true;
     }
-
+    
     public void ExecuteAnyAvailableSlides()
     {
         for (var playerIndex = 0; playerIndex < 4; playerIndex++)
@@ -234,27 +215,67 @@ public class GameBoard
         }
     }
 
-    [Pure]
-    private List<BoardTile> FindTileForForwardMove(BoardTile startingTile, CardDeck.CardTypes card, int playerSide)
+    private BoardTile ValidateAndFindDestinationTile(BoardTile sourceTile, Move move, 
+        CardDeck.CardTypes drawnCard, int playerIndex)
     {
-        if (card is CardDeck.CardTypes.Apologies or CardDeck.CardTypes.Four) return [];
 
-        var current = startingTile;
-        for (var i = 0; i < (int)card; i++)
+        // Using the correct effect check if the end tile exists
+        var destTileCandidateList = (MoveEffect)move.Effect switch
         {
-            if (current is not WalkableTile currentWalkable) return [];
-            current = currentWalkable.EvaluateNextTile(playerSide);
-        }
+            MoveEffect.Forward => 
+                FindTileForForwardMove(sourceTile, drawnCard, playerIndex),
+            MoveEffect.Backward => 
+                FindTileForBackwardMove(sourceTile, drawnCard, playerIndex),
+            MoveEffect.ExitStart => 
+                FindTileForExitStartMove(sourceTile, drawnCard, playerIndex),
+            MoveEffect.Apologies => 
+                FindTilesForApologiesMove(sourceTile, drawnCard, playerIndex),
+            MoveEffect.Swap => 
+                FindTilesForSwapMove(sourceTile, drawnCard, playerIndex),
+            >= MoveEffect.Split1 and <= MoveEffect.Split6 =>
+                FindTilesForSplitMove(sourceTile, drawnCard, playerIndex).Select( x => x.Item1),
+            _ => 
+                throw new Exception("Invalid move effect")
+        };
+
+        return destTileCandidateList.FirstOrDefault(x => x.Name == move.To) ?? throw new Exception("Invalid move");
+    }
+    
+    // Check if any pawns occupy the destination tile. If so, handle them.
+    private void ProcessDestinationTile(BoardTile sourceTile, BoardTile destTile, bool isSwap = false)
+    {
+        if (destTile is not WalkableTile) return;
         
-        return NoTeammateOnTargetTile(current, playerSide) ? [current] : [];
+        var destPlayerIndex = Array.FindIndex(PawnTiles, x => x.Any(y => y.Name == destTile.Name));
+        if (destPlayerIndex == -1) return;
+        
+        var destPawnIndex = Array.FindIndex(PawnTiles[destPlayerIndex], x => x.Name == destTile.Name);
+        ref var destPawn = ref PawnTiles[destPlayerIndex][destPawnIndex];
+        
+        destPawn = isSwap ? sourceTile : _startTiles[destPlayerIndex];
     }
 
     [Pure]
-    private List<BoardTile> FindTileForBackwardMove(BoardTile startingTile, CardDeck.CardTypes card, int playerSide)
+    private List<BoardTile> FindTileForForwardMove(BoardTile sourceTile, CardDeck.CardTypes card, int playerIndex)
+    {
+        if (card is CardDeck.CardTypes.Apologies or CardDeck.CardTypes.Four) return [];
+
+        var current = sourceTile;
+        for (var i = 0; i < (int)card; i++)
+        {
+            if (current is not WalkableTile currentWalkable) return [];
+            current = currentWalkable.EvaluateNextTile(playerIndex);
+        }
+        
+        return NoTeammateOnTargetTile(current, playerIndex) ? [current] : [];
+    }
+
+    [Pure]
+    private List<BoardTile> FindTileForBackwardMove(BoardTile sourceTile, CardDeck.CardTypes card, int playerIndex)
     {
         if (card is not CardDeck.CardTypes.Ten and not CardDeck.CardTypes.Four) return [];
 
-        var current = startingTile;
+        var current = sourceTile;
         var dist = card is CardDeck.CardTypes.Four ? 4 : 1;
         for (var i = 0; i < dist; i++)
         {
@@ -262,76 +283,94 @@ public class GameBoard
             current = currentWalkable.PrevTile;
         }
 
-        return NoTeammateOnTargetTile(current, playerSide) ? [current] : [];
+        return NoTeammateOnTargetTile(current, playerIndex) ? [current] : [];
     }
 
     [Pure]
-    private List<BoardTile> FindTileForExitStartMove(BoardTile startingTile, CardDeck.CardTypes card, int playerSide)
+    private List<BoardTile> FindTileForExitStartMove(BoardTile sourceTile, CardDeck.CardTypes card, int playerIndex)
     {
         if (card is not CardDeck.CardTypes.One and not CardDeck.CardTypes.Two) return [];
-        if (startingTile is not StartTile tile) return [];
+        if (sourceTile is not StartTile tile) return [];
         
-        if (!NoTeammateOnTargetTile(tile.NextTile, playerSide)) return [];
+        if (!NoTeammateOnTargetTile(tile.NextTile, playerIndex)) return [];
         return [tile.NextTile];
     }
 
     [Pure]
-    private List<BoardTile> FindTilesForApologiesMove(BoardTile startingTile, CardDeck.CardTypes card, int playerSide)
+    private List<BoardTile> FindTilesForApologiesMove(BoardTile sourceTile, CardDeck.CardTypes card, int playerIndex)
     {
-        if (startingTile is not StartTile) return [];
+        if (sourceTile is not StartTile) return [];
         if (card is not CardDeck.CardTypes.Apologies) return [];
 
         List<BoardTile> targets = [];
         for (var p = 0; p < 4; p++)
         {
-            if (p == playerSide) continue;
-            targets.AddRange(PawnTiles[p].Where(x => NoTeammateOnTargetTile(x, playerSide) && x is BasicTile));
+            if (p == playerIndex) continue;
+            targets.AddRange(PawnTiles[p].Where(x => NoTeammateOnTargetTile(x, playerIndex) && x is BasicTile));
         }
 
         return targets;
     }
 
     [Pure]
-    private List<BoardTile> FindTilesForSwapMove(BoardTile startingTile, CardDeck.CardTypes card, int playerSide)
+    private List<BoardTile> FindTilesForSwapMove(BoardTile sourceTile, CardDeck.CardTypes card, int playerIndex)
     {
-        if (startingTile is not BasicTile) return [];
+        if (sourceTile is not BasicTile) return [];
         if (card is not CardDeck.CardTypes.Eleven) return [];
 
         List<BoardTile> targets = [];
         for (var p = 0; p < 4; p++)
         {
-            targets.AddRange(PawnTiles[p].Where(x => NoTeammateOnTargetTile(x, playerSide) && x is BasicTile));
+            targets.AddRange(PawnTiles[p].Where(x => NoTeammateOnTargetTile(x, playerIndex) && x is BasicTile));
         }
 
         return targets;
     }
 
     [Pure]
-    private List<(BoardTile, int)> FindTilesForSplitMove(BoardTile startingTile, CardDeck.CardTypes card, int playerSide)
+    private List<(BoardTile, int)> FindTilesForSplitMove(BoardTile sourceTile, CardDeck.CardTypes card, int playerIndex)
     {
         if (card is not CardDeck.CardTypes.Seven) return [];
 
         // Make sure there are at least 2 pawns on the board
-        var walkableTileCount = PawnTiles[playerSide].Count(tile => tile is WalkableTile);
+        var walkableTileCount = PawnTiles[playerIndex].Count(tile => tile is WalkableTile);
         if (walkableTileCount < 2) return [];
-
+        
+        // Get a set of possible split move distances by checking the other three pawns
+        HashSet<int> possibleDistances = [];
+        foreach (var pairPawnTile in PawnTiles[playerIndex])
+        {
+            if (pairPawnTile == sourceTile) continue;
+            
+            var pairCurrent = pairPawnTile;
+            for (var p = 1; p < 7; p++)
+            {
+                if (pairCurrent is not WalkableTile pairCurrentWalkable) break;
+                pairCurrent = pairCurrentWalkable.EvaluateNextTile(playerIndex);
+                
+                if (pairCurrent != sourceTile && !NoTeammateOnTargetTile(pairCurrent, playerIndex)) continue;
+                possibleDistances.Add(7 - p);
+            }
+        }
+        
+        // Find the possible split moves based on the possible distances
         List<(BoardTile, int)> targets = [];
-        var current = startingTile;
+        var current = sourceTile;
         for (var p = 1; p < 7; p++)
         {
             if (current is not WalkableTile walkableTile) return targets;
-            current = walkableTile.EvaluateNextTile(playerSide);
-            if (NoTeammateOnTargetTile(current, playerSide)) targets.Add((current, p));
+            current = walkableTile.EvaluateNextTile(playerIndex);
+            if (possibleDistances.Contains(p) && NoTeammateOnTargetTile(current, playerIndex)) targets.Add((current, p));
         }
 
         return targets;
     }
 
     [Pure]
-    private bool NoTeammateOnTargetTile(BoardTile tile, int playerSide)
+    private bool NoTeammateOnTargetTile(BoardTile tile, int playerIndex)
     {
         if (tile is not WalkableTile) return true;
-        return !Array.Exists(PawnTiles[playerSide], x => x.Name == tile.Name);
+        return !Array.Exists(PawnTiles[playerIndex], x => x.Name == tile.Name);
     }
 
     // Helper that builds the game board
@@ -395,19 +434,19 @@ public class GameBoard
     }
 
     // Helper that creates a safety zone 
-    private static SafetyZoneTile BuildSafetyZone(int side)
+    private static SafetyZoneTile BuildSafetyZone(int playerIndex)
     {
         var baseTile = new SafetyZoneTile("temp", null!, null!);
         var prevTile = baseTile;
         for (var i = 1; i <= 5; i++)
         {
-            var nextTileString = $"{(char)('a' + side)}_s{i}";
+            var nextTileString = $"{(char)('a' + playerIndex)}_s{i}";
             var nextTile = new SafetyZoneTile(nextTileString, null!, prevTile);
             prevTile.NextTile = nextTile;
             prevTile = nextTile;
         }
 
-        prevTile.NextTile = new HomeTile($"{(char)('a' + side)}_H");
-        return (baseTile.EvaluateNextTile(side) as SafetyZoneTile)!;
+        prevTile.NextTile = new HomeTile($"{(char)('a' + playerIndex)}_H");
+        return (baseTile.EvaluateNextTile(playerIndex) as SafetyZoneTile)!;
     }
 }
