@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using BoredGames.Apologies.Deck;
 using JetBrains.Annotations;
 
-using BoredGames.Apologies.Deck;
-using Xunit;
-
-namespace BoredGames.Apologies.Tests.Deck;
+namespace BoredGames.UnitTests.Apologies.Deck;
 
 [TestSubject(typeof(CardDeck))]
 public class CardDeckTest
