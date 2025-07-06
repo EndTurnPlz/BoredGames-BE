@@ -24,13 +24,20 @@ public class CardDeck
     public CardDeck()
     {
         ResetAndShuffle();
-        _cards.Insert(0, CardTypes.Eleven);
+        // TODO: get rid of this crap
+        _cards.Insert(0, CardTypes.Seven);
+        _cards.Insert(0, CardTypes.Two);
+        _cards.Insert(0, CardTypes.Two);
+        _cards.Insert(0, CardTypes.Four);
+        _cards.Insert(0, CardTypes.Four);
+        _cards.Insert(0, CardTypes.Four);
+        _cards.Insert(0, CardTypes.Four);
         _cards.Insert(0, CardTypes.Two);
         _cards.Insert(0, CardTypes.Two);
         _cards.Insert(0, CardTypes.Two);
         _cards.Insert(0, CardTypes.Four);
-        _cards.Insert(0, CardTypes.One);
-        _cards.Insert(0, CardTypes.One);
+        _cards.Insert(0, CardTypes.Four);
+        _cards.Insert(0, CardTypes.Four);
         _cards.Insert(0, CardTypes.Four);
         _cards.Insert(0, CardTypes.Two);
     }
