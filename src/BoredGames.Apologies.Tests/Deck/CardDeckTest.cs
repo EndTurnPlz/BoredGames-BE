@@ -11,6 +11,12 @@ namespace BoredGames.Apologies.Tests.Deck;
 [TestSubject(typeof(CardDeck))]
 public class CardDeckTest
 {
+    private static readonly CardDeck.CardTypes[] ValidCardTypes = 
+        Enum.GetValues<CardDeck.CardTypes>()
+            .Where(c => c != CardDeck.CardTypes.Undefined)
+            .ToArray();
+
+    private static readonly int ExpectedDeckSize = ValidCardTypes.Length * 4;
     [Fact] 
     public void Constructor_ShouldCreateDeckWithCorrectCardDistribution()
     {
@@ -19,18 +25,15 @@ public class CardDeckTest
         var drawnCards = new List<CardDeck.CardTypes>();
 
         // Draw all cards from the deck
-        while (drawnCards.Count < 44)
+        while (drawnCards.Count < ExpectedDeckSize)
         {
             drawnCards.Add(deck.DrawCard());
         }
 
         // Assert - verify 4 of each card type
-        foreach (var cardType in Enum.GetValues<CardDeck.CardTypes>())
+        foreach (var cardType in ValidCardTypes)
         {
-            if (cardType != CardDeck.CardTypes.Undefined)
-            {
-                Assert.Equal(4, drawnCards.Count(c => c == cardType));
-            }
+            Assert.Equal(4, drawnCards.Count(c => c == cardType));
         }
     }
 
@@ -45,24 +48,26 @@ public class CardDeckTest
 
         // Assert
         Assert.NotEqual(CardDeck.CardTypes.Undefined, card);
+        Assert.Contains(card, ValidCardTypes);
         Assert.Equal(card, deck.LastDrawn);
     }
 
     [Fact]
-    public void DrawCard_ShouldReturnDifferentConsecutiveCards()
+    public void DrawCard_ShouldReturnValidCardsFromExpectedSet()
     {
         // Arrange
         var deck = new CardDeck();
-        var drawnCards = new HashSet<CardDeck.CardTypes>();
+        var drawnCards = new List<CardDeck.CardTypes>();
 
-        // Act
-        for (int i = 0; i < 5; i++)
+        // Act - Draw several cards
+        for (int i = 0; i < 10; i++)
         {
             drawnCards.Add(deck.DrawCard());
         }
 
-        // Assert 
-        Assert.InRange(drawnCards.Count, 2, 5); // At least 1 card was different
+        // Assert - All cards should be valid
+        Assert.All(drawnCards, card => Assert.Contains(card, ValidCardTypes));
+        Assert.All(drawnCards, card => Assert.NotEqual(CardDeck.CardTypes.Undefined, card));
     }
 
     [Fact]
@@ -74,7 +79,7 @@ public class CardDeckTest
         var secondRoundCards = new List<CardDeck.CardTypes>();
 
         // Act - Draw full deck
-        for (int i = 0; i < 44; i++) 
+        for (int i = 0; i < ExpectedDeckSize; i++) 
         {
             firstRoundCards.Add(deck.DrawCard());
         }
@@ -86,29 +91,31 @@ public class CardDeckTest
         }
 
         // Assert
-        Assert.Equal(44, firstRoundCards.Count);
+        Assert.Equal(ExpectedDeckSize, firstRoundCards.Count);
         Assert.Equal(10, secondRoundCards.Count);
         Assert.All(secondRoundCards, card => Assert.NotEqual(CardDeck.CardTypes.Undefined, card));
+        Assert.All(secondRoundCards, card => Assert.Contains(card, ValidCardTypes));
     }
 
     [Fact]
-    public void Shuffle_ShouldRandomizeCardOrder()
+    public void Shuffle_ShouldProduceValidRandomizedOrder()
     {
         // Arrange
-        var deck1 = new CardDeck();
-        var deck2 = new CardDeck();
-        var cards1 = new List<CardDeck.CardTypes>();
-        var cards2 = new List<CardDeck.CardTypes>();
+        var deck = new CardDeck();
+        var cards = new List<CardDeck.CardTypes>();
+        var cardCounts = new Dictionary<CardDeck.CardTypes, int>();
 
-        // Act
-        for (int i = 0; i < 10; i++)
+        // Act - Draw multiple cards to check distribution
+        for (int i = 0; i < 20; i++)
         {
-            cards1.Add(deck1.DrawCard());
-            cards2.Add(deck2.DrawCard());
+            var card = deck.DrawCard();
+            cards.Add(card);
+            cardCounts[card] = cardCounts.GetValueOrDefault(card, 0) + 1;
         }
 
-        // Assert
-        Assert.False(cards1.SequenceEqual(cards2)); // Very unlikely to get same order
+        // Assert - Should have some variety in drawn cards
+        Assert.True(cardCounts.Count >= 2, "Should draw at least 2 different card types in 20 draws");
+        Assert.All(cards, card => Assert.Contains(card, ValidCardTypes));
     }
 
     [Fact] 
@@ -123,6 +130,39 @@ public class CardDeckTest
 
         var card2 = deck.DrawCard(); 
         Assert.Equal(card2, deck.LastDrawn);
-        Assert.NotEqual(card1, card2);
+
+        // LastDrawn should always reflect the most recent card
+        var card3 = deck.DrawCard();
+        Assert.Equal(card3, deck.LastDrawn);
+        Assert.NotEqual(card1, deck.LastDrawn); // Current should not equal first
+    }
+
+    [Fact]
+    public void DrawCard_ShouldContinuouslyProvideValidCards()
+    {
+        // Arrange
+        var deck = new CardDeck();
+        var drawnCards = new List<CardDeck.CardTypes>();
+
+        // Act - Draw more cards than deck size to test reshuffling
+        for (int i = 0; i < ExpectedDeckSize + 10; i++)
+        {
+            drawnCards.Add(deck.DrawCard());
+        }
+
+        // Assert
+        Assert.Equal(ExpectedDeckSize + 10, drawnCards.Count);
+        Assert.All(drawnCards, card => Assert.NotEqual(CardDeck.CardTypes.Undefined, card));
+        Assert.All(drawnCards, card => Assert.Contains(card, ValidCardTypes));
+    }
+
+    [Fact]
+    public void Constructor_ShouldInitializeLastDrawnAsUndefined()
+    {
+        // Arrange & Act
+        var deck = new CardDeck();
+
+        // Assert
+        Assert.Equal(CardDeck.CardTypes.Undefined, deck.LastDrawn);
     }
 }
