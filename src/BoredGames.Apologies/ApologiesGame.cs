@@ -13,6 +13,9 @@ public sealed class ApologiesGame : AbstractGame
     private readonly List<Player> _players = [];
     private Phase GamePhase { get; set; } = Phase.Lobby;
     private MovePawnRequest? _lastCompletedMove = null;
+    private int[] PlayerStats_PawnsKilled = Enumerable.Repeat(0, 4).ToArray();
+    private int[] PlayerStats_MovesMade = Enumerable.Repeat(0, 4).ToArray();
+    private long GameStartTimestamp = DateTime.Now.Ticks;
 
     public ApologiesGame(Player host) : base(host)
     {
@@ -93,18 +96,29 @@ public sealed class ApologiesGame : AbstractGame
         // make sure SplitMove is set only if the last drawn card is a 7
         if (!IsCorrectPlayerMoving(player)) return false;
         
-        var playerNum = _players.IndexOf(player);
+        var playerIndex = _players.IndexOf(player);
         
-        if (req.SplitMove is { } splitMove)
-        {
+        var pawnTilesBeforeMove = _gameBoard.PawnTiles
+            .Select(playerTiles => playerTiles.ToArray())
+            .ToArray();
+        
+        
+        if (req.SplitMove is { } splitMove) {
             if (_cardDeck.LastDrawn != CardDeck.CardTypes.Seven) return false;
-            if (!_gameBoard.TryExecuteSplitMove(req.Move, splitMove, playerNum)) return false;
-        }
-        else
-        {
-            if (!_gameBoard.TryExecuteMovePawn(req.Move, _cardDeck.LastDrawn, playerNum)) return false;
+            if (!_gameBoard.TryExecuteSplitMove(req.Move, splitMove, playerIndex)) return false;
+        } else {
+            if (!_gameBoard.TryExecuteMovePawn(req.Move, _cardDeck.LastDrawn, playerIndex)) return false;
         }
         _gameBoard.ExecuteAnyAvailableSlides();
+
+        var killedPawns = 0;
+        for (var i = 0; i < _gameBoard.PawnTiles.Length; i++) {
+            if (i == playerIndex) continue;
+            killedPawns += pawnTilesBeforeMove[i].Count(t => t is StartTile) 
+                           - _gameBoard.PawnTiles[i].Count(t => t is StartTile);
+        }
+        PlayerStats_PawnsKilled[playerIndex] += killedPawns;
+        PlayerStats_MovesMade[playerIndex]++;
         
         AdvanceGamePhase();
         _lastCompletedMove = req;
@@ -130,6 +144,12 @@ public sealed class ApologiesGame : AbstractGame
         );
     }
 
+    public GetEndgameStatsResponse GetEndgameStats()
+    {
+        return new GetEndgameStatsResponse(PlayerStats_MovesMade, PlayerStats_PawnsKilled, 
+            DateTime.Now.Ticks - GameStartTimestamp);
+    }
+
     private void AdvanceGamePhase(bool noMoves = false)
     {
         var gameWon = Array.Exists(_gameBoard.PawnTiles, playerPawnTiles =>
@@ -138,8 +158,7 @@ public sealed class ApologiesGame : AbstractGame
 
         var drawAgain = _cardDeck.LastDrawn == CardDeck.CardTypes.Two;
 
-        var nextGamePhase = gameWon ? Phase.End : GamePhase switch
-        {
+        var nextGamePhase = gameWon ? Phase.End : GamePhase switch {
             Phase.Lobby => Phase.P1Draw,
             Phase.P1Draw => noMoves ? Phase.P2Draw : Phase.P1Move,
             Phase.P1Move => drawAgain ? Phase.P1Draw : Phase.P2Draw,

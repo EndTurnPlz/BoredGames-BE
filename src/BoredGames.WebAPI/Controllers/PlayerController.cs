@@ -33,15 +33,12 @@ public class PlayerController : ControllerBase
             Username = playerName
         };
 
-        try
-        {
+        try { 
             game.JoinGame(player);
-        }
-        catch (JoinGameException ex)
-        {
+        } catch (JoinGameException ex) {
             return BadRequest(ex.Message);
         }
-        
+
         return Ok(new { playerId });
     }
 
@@ -80,9 +77,8 @@ public class PlayerController : ControllerBase
                 await Response.Body.FlushAsync(cancellationToken);
                 await Task.Delay(250, cancellationToken);
             }
-        }
-        catch (Exception ex) when (ex is OperationCanceledException || 
-                                   ex is InvalidOperationException)
+        } catch (Exception ex) when (ex is OperationCanceledException || 
+                                    ex is InvalidOperationException)
         {
             player.IsConnected = false;
         }

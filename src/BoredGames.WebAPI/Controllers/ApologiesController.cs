@@ -1,6 +1,7 @@
 using BoredGames.Apologies;
 using BoredGames.Apologies.EndpointObjects;
 using BoredGames.Common;
+using BoredGames.Common.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BoredGames.Controllers;
@@ -32,18 +33,31 @@ public class ApologiesController : ControllerBase
 
         return Ok();
     }
-
+    
     [HttpGet("pullGameState")]
     public ActionResult<PullGameStateResponse> PullGameState([FromRoute] Guid playerId)
     {
-        if (PlayerValidityErrors(playerId) is BadRequestObjectResult errResult)
-            return errResult;
+        if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
 
         var game = (ApologiesGame)Player.GetPlayer(playerId)!.Game;
         return Ok(game.PullCurrentState());
     }
 
-    private ActionResult? PlayerValidityErrors(Guid playerId)
+    [HttpGet("getEndgameStats")]
+    public ActionResult<PullGameStateResponse> GetEndgameStats([FromRoute] Guid playerId)
+    {
+        if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
+
+        var game = (ApologiesGame)Player.GetPlayer(playerId)!.Game;
+        
+        try {
+            return Ok(game.GetEndgameStats());
+        } catch (GameNotOverException) {
+            return BadRequest("Game has not ended yet");
+        }
+    }
+
+    private BadRequestObjectResult? PlayerValidityErrors(Guid playerId)
     {
         if (Player.GetPlayer(playerId) is null) return BadRequest("Invalid player id");
 

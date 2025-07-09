@@ -29,4 +29,10 @@ public record MoveOpts(
     string From,
     string To, 
     IEnumerable<int> Effects);
+
+[UsedImplicitly]
+public record GetEndgameStatsResponse(
+    IEnumerable<int> MovesMade,
+    IEnumerable<int> PawnsKilled, 
+    long GameTimeElapsed);
     
