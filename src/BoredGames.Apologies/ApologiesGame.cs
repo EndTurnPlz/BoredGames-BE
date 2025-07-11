@@ -12,7 +12,7 @@ public sealed class ApologiesGame : AbstractGame
     private readonly GameBoard _gameBoard = new();
     private readonly List<Player> _players = [];
     private Phase GamePhase { get; set; } = Phase.Lobby;
-    private MovePawnRequest? _lastCompletedMove = null;
+    private MovePawnRequest? _lastCompletedMove;
     private readonly int[] _playerStatsPawnsKilled = Enumerable.Repeat(0, 4).ToArray();
     private readonly int[] _playerStatsMovesMade = Enumerable.Repeat(0, 4).ToArray();
     private readonly long _gameStartTimestamp = DateTime.Now.Ticks;
@@ -144,8 +144,8 @@ public sealed class ApologiesGame : AbstractGame
             _gameBoard.PawnTiles.Select(playerTiles => 
                 playerTiles.Select(
                     pawnTiles => pawnTiles.Name
-                ).ToArray()
-            ).ToArray()
+                )
+            )
         );
     }
 
