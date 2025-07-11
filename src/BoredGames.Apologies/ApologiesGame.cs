@@ -12,10 +12,9 @@ public sealed class ApologiesGame : AbstractGame
     private readonly GameBoard _gameBoard = new();
     private readonly List<Player> _players = [];
     private Phase GamePhase { get; set; } = Phase.Lobby;
-    private MovePawnRequest? _lastCompletedMove = null;
-    private int[] PlayerStats_PawnsKilled = Enumerable.Repeat(0, 4).ToArray();
-    private int[] PlayerStats_MovesMade = Enumerable.Repeat(0, 4).ToArray();
-    private long GameStartTimestamp = DateTime.Now.Ticks;
+    private readonly int[] _playerStatsPawnsKilled = Enumerable.Repeat(0, 4).ToArray();
+    private readonly int[] _playerStatsMovesMade = Enumerable.Repeat(0, 4).ToArray();
+    private readonly long _gameStartTimestamp = DateTime.Now.Ticks;
 
     public ApologiesGame(Player host) : base(host)
     {
@@ -35,12 +34,18 @@ public sealed class ApologiesGame : AbstractGame
     
     public override void LeaveGame(Player player)
     {
-        if (GamePhase != Phase.Lobby) return;
         if (!_players.Contains(player)) return;
+        CurrentView++;
+        
+        if (GamePhase != Phase.Lobby) return;
         _players.Remove(player);
 
-        if (_players.Count == 0) return;
-        if (player == Host) Host = _players[0];
+        if (_players.Count == 0) {
+            GamePhase = Phase.End;
+            _players.Clear();
+        }
+        
+        if (player == Host) Host = _players.First();
     }
 
     public override bool StartGame(Player player)
@@ -55,7 +60,7 @@ public sealed class ApologiesGame : AbstractGame
     private bool IsCorrectPlayerDrawing(Player player)
     {
         var playerIndex = _players.IndexOf(player);
-        return GamePhase switch
+        return GamePhase switch 
         {
             Phase.P1Draw => playerIndex == 0,
             Phase.P2Draw => playerIndex == 1,
@@ -68,8 +73,7 @@ public sealed class ApologiesGame : AbstractGame
     private bool IsCorrectPlayerMoving(Player player)
     {
         var playerIndex = _players.IndexOf(player);
-        return GamePhase switch
-        {
+        return GamePhase switch {
             Phase.P1Move => playerIndex == 0,
             Phase.P2Move => playerIndex == 1,
             Phase.P3Move => playerIndex == 2,
@@ -117,11 +121,10 @@ public sealed class ApologiesGame : AbstractGame
             killedPawns += pawnTilesBeforeMove[i].Count(t => t is StartTile) 
                            - _gameBoard.PawnTiles[i].Count(t => t is StartTile);
         }
-        PlayerStats_PawnsKilled[playerIndex] += killedPawns;
-        PlayerStats_MovesMade[playerIndex]++;
+        _playerStatsPawnsKilled[playerIndex] += killedPawns;
+        _playerStatsMovesMade[playerIndex]++;
         
         AdvanceGamePhase();
-        _lastCompletedMove = req;
         CurrentView += 1;
         return true;
     }
@@ -132,22 +135,20 @@ public sealed class ApologiesGame : AbstractGame
             CurrentView,
             (int)GamePhase,
             (int)_cardDeck.LastDrawn,
-            _lastCompletedMove,
             _players.IndexOf(Host),
-            _players.Select(p => p.Username),
-            _players.Select(p => p.IsConnected),
+            _players.Select(p => p.Username).ToArray(),
             _gameBoard.PawnTiles.Select(playerTiles => 
                 playerTiles.Select(
                     pawnTiles => pawnTiles.Name
-                )
-            )
+                ).ToArray()
+            ).ToArray()
         );
     }
 
-    public GetEndgameStatsResponse GetEndgameStats()
+    public GetEndgameStatsResponse GetStats()
     {
-        return new GetEndgameStatsResponse(PlayerStats_MovesMade, PlayerStats_PawnsKilled, 
-            DateTime.Now.Ticks - GameStartTimestamp);
+        return new GetEndgameStatsResponse(_playerStatsMovesMade, _playerStatsPawnsKilled, 
+            DateTime.Now.Ticks - _gameStartTimestamp);
     }
 
     private void AdvanceGamePhase(bool noMoves = false)

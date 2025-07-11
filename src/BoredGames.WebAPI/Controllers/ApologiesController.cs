@@ -43,17 +43,17 @@ public class ApologiesController : ControllerBase
         return Ok(game.PullCurrentState());
     }
 
-    [HttpGet("getEndgameStats")]
-    public ActionResult<PullGameStateResponse> GetEndgameStats([FromRoute] Guid playerId)
+    [HttpGet("getStats")]
+    public ActionResult<PullGameStateResponse> GetStats([FromRoute] Guid playerId)
     {
         if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
 
         var game = (ApologiesGame)Player.GetPlayer(playerId)!.Game;
         
         try {
-            return Ok(game.GetEndgameStats());
-        } catch (GameNotOverException) {
-            return BadRequest("Game has not ended yet");
+            return Ok(game.GetStats());
+        } catch (GameException ex) {
+            return BadRequest(ex.Message);
         }
     }
 

@@ -1,7 +1,7 @@
 namespace BoredGames.Common.Exceptions;
 
-public class CreateGameException(string message) : Exception(message);
-public class JoinGameException(string message) : Exception(message);
-public class StartGameException(string message) : Exception(message);
 
-public class GameNotOverException(string message) : Exception(message);
+public abstract class GameException(string message) : Exception(message);
+public class CreateGameException(string message) : GameException(message);
+public class JoinGameException(string message) : GameException(message);
+public class StartGameException(string message) : GameException(message);
