@@ -6,9 +6,9 @@ public class Player
     private readonly Guid _id = Guid.NewGuid();
     public string Username { get; init; } = "";
     public AbstractGame Game { get; set; } = null!;
-    
+
     public bool IsConnected { get; set; } = false;
-    
+
     public Player(out Guid playerId)
     {
         playerId = _id;
@@ -45,6 +45,12 @@ public class Player
     ~Player()
     {
         PlayerMap.Remove(_id);
+        Game.LeaveGame(this);
+    }
+
+    public void Disconnect()
+    {
+        IsConnected = false;
         Game.LeaveGame(this);
     }
 
