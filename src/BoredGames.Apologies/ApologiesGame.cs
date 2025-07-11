@@ -12,6 +12,7 @@ public sealed class ApologiesGame : AbstractGame
     private readonly GameBoard _gameBoard = new();
     private readonly List<Player> _players = [];
     private Phase GamePhase { get; set; } = Phase.Lobby;
+    private MovePawnRequest? _lastCompletedMove = null;
     private readonly int[] _playerStatsPawnsKilled = Enumerable.Repeat(0, 4).ToArray();
     private readonly int[] _playerStatsMovesMade = Enumerable.Repeat(0, 4).ToArray();
     private readonly long _gameStartTimestamp = DateTime.Now.Ticks;
@@ -125,6 +126,7 @@ public sealed class ApologiesGame : AbstractGame
         _playerStatsMovesMade[playerIndex]++;
         
         AdvanceGamePhase();
+        _lastCompletedMove = req;
         CurrentView += 1;
         return true;
     }
@@ -135,8 +137,10 @@ public sealed class ApologiesGame : AbstractGame
             CurrentView,
             (int)GamePhase,
             (int)_cardDeck.LastDrawn,
+            _lastCompletedMove,
             _players.IndexOf(Host),
             _players.Select(p => p.Username).ToArray(),
+            _players.Select(p => p.IsConnected),
             _gameBoard.PawnTiles.Select(playerTiles => 
                 playerTiles.Select(
                     pawnTiles => pawnTiles.Name
