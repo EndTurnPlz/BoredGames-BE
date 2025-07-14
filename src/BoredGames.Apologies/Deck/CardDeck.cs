@@ -3,7 +3,7 @@ namespace BoredGames.Apologies.Deck;
 public class CardDeck
 {
     public CardTypes LastDrawn { get; private set; } = CardTypes.Undefined;
-    private readonly List<CardTypes> _cards = new();
+    private readonly List<CardTypes> _cards = [];
 
     public enum CardTypes
     {

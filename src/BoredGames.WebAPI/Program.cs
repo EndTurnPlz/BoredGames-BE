@@ -41,4 +41,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapControllers();
+
+// Handle application shutdown
+app.Services.GetRequiredService<IHostApplicationLifetime>()
+    .ApplicationStopping.Register(BoredGames.RoomManager.StopService);
+
+
 app.Run();

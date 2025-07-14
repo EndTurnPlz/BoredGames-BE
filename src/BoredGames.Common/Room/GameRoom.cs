@@ -8,10 +8,10 @@ public class GameRoom
     public Guid Id { get; } = Guid.NewGuid();
     private readonly Player _host;
     private readonly List<Player> _players = [];
-    public State CurrentState = State.WaitingForPlayers;
-    
+    public State CurrentState { get; private set; } = State.WaitingForPlayers;
+
     private readonly AbstractGameConfig _gameConfig;
-    private AbstractGame? _game;
+    public AbstractGame? Game; // Make this private in a later refactor
     
     public GameRoom(Player host, AbstractGameConfig gameConfig)
     {
@@ -50,11 +50,11 @@ public class GameRoom
         if (_host.ValidateId(playerId)) throw new PlayerNotHostException();
         if (_players.Count < _gameConfig.MinPlayerCount) throw new RoomCannotStartException();
         
-        _game = Activator.CreateInstance(_gameConfig.GameType) as AbstractGame;
+        Game = Activator.CreateInstance(_gameConfig.GameType) as AbstractGame;
         CurrentState = State.GameStarted;
     }
     
-    public IGameSnapshot? GetGameSnapshot() => _game?.GetSnapshot();
+    public IGameSnapshot? GetGameSnapshot() => Game?.GetSnapshot();
     
     public IEnumerable<string> GetPlayerNames() => _players.Select(p => p.Username);
     
@@ -62,7 +62,7 @@ public class GameRoom
     {
         WaitingForPlayers,
         GameStarted,
-        GameEnded,
+        GameEnded, // Implement this when there's a single game action function
         Dead
     }
 }

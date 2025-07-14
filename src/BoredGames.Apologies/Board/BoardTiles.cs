@@ -36,8 +36,8 @@ public class JunctionTile (
 ) :
     BasicTile(name, nextTile, prevTile)
 {
-    public SafetyZoneTile SafetyZone { get; } = safetyZoneTile;
-    public int PlayerSide { get; } = playerSide;
+    private SafetyZoneTile SafetyZone { get; } = safetyZoneTile;
+    private int PlayerSide { get; } = playerSide;
 
     public override BoardTile EvaluateNextTile(int playerSide)
     {

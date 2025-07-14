@@ -11,7 +11,7 @@ namespace BoredGames.Controllers;
 [Route("/games/[controller]/{playerId:guid}")]
 public class ApologiesController : ControllerBase
 {
-    [HttpGet("drawCard")]
+    [HttpGet("draw")]
     public ActionResult<DrawCardResponse> DrawCard([FromRoute] Guid playerId)
     {
         if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
@@ -23,7 +23,7 @@ public class ApologiesController : ControllerBase
         return Ok(moveList);
     }
 
-    [HttpPost("movePawn")]
+    [HttpPost("move")]
     public ActionResult MovePawn([FromRoute] Guid playerId, [FromBody] MovePawnArgs req)
     {
         if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
@@ -34,7 +34,7 @@ public class ApologiesController : ControllerBase
         return Ok();
     }
 
-    [HttpGet("getStats")]
+    [HttpGet("stats")]
     public ActionResult<IGameSnapshot> GetStats([FromRoute] Guid playerId)
     {
         if (PlayerValidityErrors(playerId) is { } errResult) return errResult;

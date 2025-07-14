@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics.Contracts;
 using BoredGames.Apologies;
 using BoredGames.Common;
@@ -8,7 +9,37 @@ namespace BoredGames;
 
 public static class RoomManager
 {
-    private static readonly Dictionary<Guid, GameRoom> Rooms = new();
+    private static readonly ConcurrentDictionary<Guid, GameRoom> Rooms = new();
+    private static readonly CancellationTokenSource TickerCts = new();
+    
+    static RoomManager()
+    {
+        Task.Run(async () =>
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+            try {
+                while (await timer.WaitForNextTickAsync(TickerCts.Token)) {
+                    try { 
+                        foreach (var room in Rooms.Values) {
+                            if (room.CurrentState is not GameRoom.State.Dead) continue;
+                            while (Rooms.TryRemove(room.Id, out _)) { }
+                        }
+                    }
+                    catch (Exception ex) {
+                        // Add some actual logging here at some point
+                        Console.WriteLine($"An error occurred during the background tick: {ex.Message}");
+                    }
+                }
+            }
+            catch (OperationCanceledException) { }  // This is expected on a graceful shutdown.
+        });
+    }
+    
+    public static void StopService()
+    {
+        TickerCts.Cancel();
+        TickerCts.Dispose();
+    }
 
     public static Guid CreateRoom(GameTypes gameType, Player host)
     {
@@ -18,7 +49,9 @@ public static class RoomManager
             _ => throw new ArgumentOutOfRangeException(nameof(gameType), gameType, null)
         };
         
-        Rooms.Add(lobby.Id, lobby);
+        var ok = Rooms.TryAdd(lobby.Id, lobby);
+        if (!ok) throw new CreateRoomFailedException();
+
         return lobby.Id;
     }
     
@@ -26,20 +59,16 @@ public static class RoomManager
     {
         GetRoom(roomId).Join(player);
     }
-
-    public static int GetRoomViewNum(Guid lobbyId)
-    {
-        return GetRoom(lobbyId).ViewNum;
-    }
-
-    public static void StartGame(Guid lobbyId, Guid playerId)
-    {
-        GetRoom(lobbyId).StartGame(playerId);
-    }
-
+    
     [Pure]
     public static GameRoom GetRoom(Guid lobbyId)
     {
         return Rooms.GetValueOrDefault(lobbyId) ?? throw new RoomNotFoundException();
+    }
+
+    // Temporary function for now ... will delete this when the full snapshot is passed via SSE.
+    public static int GetRoomViewNum(Guid lobbyId)
+    {
+        return GetRoom(lobbyId).ViewNum + (GetRoom(lobbyId).Game?.ViewNum ?? 0);
     }
 }
