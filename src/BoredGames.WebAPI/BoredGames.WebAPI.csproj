@@ -9,12 +9,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.6"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.6" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\BoredGames.Apologies\BoredGames.Apologies.csproj" />
-        <ProjectReference Include="..\BoredGames.Common\BoredGames.Common.csproj"/>
+        <ProjectReference Include="..\BoredGames.Common\BoredGames.Common.csproj" />
     </ItemGroup>
 
 

@@ -1,5 +1,4 @@
 using BoredGames.Common.Game;
-using BoredGames.Common.Room.Models;
 
 namespace BoredGames.Common.Room;
 
@@ -9,10 +8,10 @@ public class GameRoom
     public Guid Id { get; } = Guid.NewGuid();
     private readonly Player _host;
     private readonly List<Player> _players = [];
-    private State _state = State.WaitingForPlayers;
+    public State CurrentState = State.WaitingForPlayers;
     
     private readonly AbstractGameConfig _gameConfig;
-    public AbstractGame? Game;
+    private AbstractGame? _game;
     
     public GameRoom(Player host, AbstractGameConfig gameConfig)
     {
@@ -23,7 +22,7 @@ public class GameRoom
 
     public void Join(Player player)
     {
-        if (_state is not State.WaitingForPlayers) throw new RoomNotFoundException();
+        if (CurrentState is not State.WaitingForPlayers) throw new RoomNotFoundException();
         if (_players.Count >= _gameConfig.MaxPlayerCount) throw new RoomIsFullException();
 
         ViewNum++;
@@ -37,7 +36,7 @@ public class GameRoom
         ViewNum++;
         
         if (player == _host) {
-            _state = State.Dead;
+            CurrentState = State.Dead;
             _players.Clear();
             return;
         }
@@ -45,26 +44,19 @@ public class GameRoom
         _players.Remove(player);
     }
 
-    public void SetConnectionStatus(Player player, bool isConnected)
-    {
-        
-    }
-
     public void StartGame(Guid playerId)
     {
-        if (_state is not State.WaitingForPlayers) throw new RoomCannotStartException();
+        if (CurrentState is not State.WaitingForPlayers) throw new RoomCannotStartException();
         if (_host.ValidateId(playerId)) throw new PlayerNotHostException();
         if (_players.Count < _gameConfig.MinPlayerCount) throw new RoomCannotStartException();
         
-        _state = State.GameStarted;
-        
-        // Add Game start logic here
+        _game = Activator.CreateInstance(_gameConfig.GameType) as AbstractGame;
+        CurrentState = State.GameStarted;
     }
-
-    public RoomSnapshot GetSnapshot()
-    {
-        return new RoomSnapshot(_state, _players.Select(p => p.Username), Game?.GetSnapshot());
-    }
+    
+    public IGameSnapshot? GetGameSnapshot() => _game?.GetSnapshot();
+    
+    public IEnumerable<string> GetPlayerNames() => _players.Select(p => p.Username);
     
     public enum State
     {

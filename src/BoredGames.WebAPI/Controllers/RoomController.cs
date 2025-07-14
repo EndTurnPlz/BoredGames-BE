@@ -1,7 +1,7 @@
 using BoredGames.Common;
 using BoredGames.Common.Game;
 using BoredGames.Common.Room;
-using BoredGames.Common.Room.Models;
+using BoredGames.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BoredGames.Controllers;
@@ -53,7 +53,8 @@ public class RoomController : ControllerBase
     {
         
         try {
-            RoomManager.StartGame(roomId, playerId);
+            var room = RoomManager.GetRoom(roomId);
+            room.StartGame(playerId);
         } catch (RoomException ex) {
             return BadRequest(ex.Message);
         }
@@ -64,11 +65,15 @@ public class RoomController : ControllerBase
     [HttpGet("{roomId:guid}/snapshot")]
     public ActionResult<RoomSnapshot> GetSnapshot([FromRoute] Guid roomId)
     {
+        GameRoom room;
         try {
-            return Ok(RoomManager.GetRoomSnapshot(roomId));
+            room = RoomManager.GetRoom(roomId);
         } catch (RoomException ex) {
             return BadRequest(ex.Message);
         }
+        
+        var snapshot = new RoomSnapshot(room.CurrentState, room.GetPlayerNames(), room.GetGameSnapshot());
+        return Ok(snapshot);
     }
 
     [Produces("text/event-stream")]

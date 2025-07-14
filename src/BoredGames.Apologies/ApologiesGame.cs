@@ -12,7 +12,7 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame
     private readonly GameBoard _gameBoard = new();
     private readonly Player[] _players = players.ToArray();
     private State GameState { get; set; } = State.P1Draw;
-    private MovePawnRequest? _lastCompletedMove;
+    private MovePawnArgs? _lastCompletedMove;
     private readonly int[] _playerStatsPawnsKilled = Enumerable.Repeat(0, 4).ToArray();
     private readonly int[] _playerStatsMovesMade = Enumerable.Repeat(0, 4).ToArray();
     private readonly long _gameStartTimestamp = DateTime.Now.Ticks;
@@ -55,7 +55,7 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame
         return new DrawCardResponse(ViewNum, (int)lastDrawn, validMoves);
     }
 
-    public bool MovePawn(MovePawnRequest req, Player player)
+    public bool MovePawn(MovePawnArgs req, Player player)
     {
         // make sure SplitMove is set only if the last drawn card is a 7
         if (!IsCorrectPlayerMoving(player)) return false;
@@ -105,9 +105,9 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame
             ));
     }
 
-    public GetEndgameStatsResponse GetStats()
+    public EndgameStatsResponse GetStats()
     {
-        return new GetEndgameStatsResponse(_playerStatsMovesMade, _playerStatsPawnsKilled, 
+        return new EndgameStatsResponse(_playerStatsMovesMade, _playerStatsPawnsKilled, 
             DateTime.Now.Ticks - _gameStartTimestamp);
     }
 
@@ -133,6 +133,8 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame
         
         GameState = nextGamePhase;
     }
+    
+    public override bool HasEnded() => GameState == State.End;
 
     public enum State
     {

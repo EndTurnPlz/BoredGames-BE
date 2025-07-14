@@ -1,8 +1,8 @@
+using System.Diagnostics.Contracts;
 using BoredGames.Apologies;
 using BoredGames.Common;
 using BoredGames.Common.Game;
 using BoredGames.Common.Room;
-using BoredGames.Common.Room.Models;
 
 namespace BoredGames;
 
@@ -32,17 +32,13 @@ public static class RoomManager
         return GetRoom(lobbyId).ViewNum;
     }
 
-    public static RoomSnapshot GetRoomSnapshot(Guid lobbyId)
-    {
-        return GetRoom(lobbyId).GetSnapshot();
-    }
-
     public static void StartGame(Guid lobbyId, Guid playerId)
     {
         GetRoom(lobbyId).StartGame(playerId);
     }
 
-    private static GameRoom GetRoom(Guid lobbyId)
+    [Pure]
+    public static GameRoom GetRoom(Guid lobbyId)
     {
         return Rooms.GetValueOrDefault(lobbyId) ?? throw new RoomNotFoundException();
     }

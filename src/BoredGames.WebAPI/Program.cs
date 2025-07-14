@@ -11,8 +11,13 @@ appBuilder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-appBuilder.Services.AddOpenApi();
+appBuilder.Services.AddEndpointsApiExplorer();
+appBuilder.Services.AddSwaggerGen(options =>
+{
+    // Add this line to tell Swagger to also use string enums
+    options.AddServer(new Microsoft.OpenApi.Models.OpenApiServer() { Url = "http://localhost:5000" });
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "My API", Version = "v1" });
+});
 
 appBuilder.Services.AddCors(options =>
 {
@@ -30,6 +35,8 @@ var app = appBuilder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
     app.UseCors("AllowLocalhost3000");
 }
 

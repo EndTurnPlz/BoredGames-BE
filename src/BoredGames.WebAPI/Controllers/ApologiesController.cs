@@ -2,7 +2,6 @@ using BoredGames.Apologies;
 using BoredGames.Apologies.Models;
 using BoredGames.Common;
 using BoredGames.Common.Game;
-using BoredGames.Common.Room.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BoredGames.Controllers;
@@ -25,7 +24,7 @@ public class ApologiesController : ControllerBase
     }
 
     [HttpPost("movePawn")]
-    public ActionResult MovePawn([FromRoute] Guid playerId, [FromBody] MovePawnRequest req)
+    public ActionResult MovePawn([FromRoute] Guid playerId, [FromBody] MovePawnArgs req)
     {
         if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
 
@@ -33,15 +32,6 @@ public class ApologiesController : ControllerBase
         if (!game.MovePawn(req, Player.GetPlayer(playerId)!)) return BadRequest("Invalid move");
 
         return Ok();
-    }
-    
-    [HttpGet("snapshot")]
-    public ActionResult<IGameSnapshot> PullGameState([FromRoute] Guid playerId)
-    {
-        if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
-
-        var game = (ApologiesGame)Player.GetPlayer(playerId)!.Game;
-        return Ok(game.GetSnapshot());
     }
 
     [HttpGet("getStats")]
