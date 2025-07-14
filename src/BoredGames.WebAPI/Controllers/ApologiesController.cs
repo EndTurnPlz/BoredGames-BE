@@ -1,7 +1,8 @@
 using BoredGames.Apologies;
-using BoredGames.Apologies.EndpointObjects;
+using BoredGames.Apologies.Models;
 using BoredGames.Common;
-using BoredGames.Common.Exceptions;
+using BoredGames.Common.Game;
+using BoredGames.Common.Room.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BoredGames.Controllers;
@@ -34,17 +35,17 @@ public class ApologiesController : ControllerBase
         return Ok();
     }
     
-    [HttpGet("pullGameState")]
-    public ActionResult<PullGameStateResponse> PullGameState([FromRoute] Guid playerId)
+    [HttpGet("snapshot")]
+    public ActionResult<IGameSnapshot> PullGameState([FromRoute] Guid playerId)
     {
         if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
 
         var game = (ApologiesGame)Player.GetPlayer(playerId)!.Game;
-        return Ok(game.PullCurrentState());
+        return Ok(game.GetSnapshot());
     }
 
     [HttpGet("getStats")]
-    public ActionResult<PullGameStateResponse> GetStats([FromRoute] Guid playerId)
+    public ActionResult<IGameSnapshot> GetStats([FromRoute] Guid playerId)
     {
         if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
 

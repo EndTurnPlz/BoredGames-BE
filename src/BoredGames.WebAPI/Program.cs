@@ -1,8 +1,16 @@
+using System.Text.Json.Serialization;
+
 var appBuilder = WebApplication.CreateBuilder(args);
 //appBuilder.Logging.ClearProviders();
 
 // Add services to the container.
-appBuilder.Services.AddControllers();
+appBuilder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // This converter tells the serializer to handle all enums as strings
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 appBuilder.Services.AddOpenApi();
 

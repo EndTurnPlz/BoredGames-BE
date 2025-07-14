@@ -1,17 +1,6 @@
 using JetBrains.Annotations;
 
-namespace BoredGames.Apologies.EndpointObjects;
-
-[UsedImplicitly]
-public record PullGameStateResponse(
-    int CurrentView,
-    int GamePhase,
-    int LastDrawnCard,
-    MovePawnRequest? LastCompletedMove,
-    int Host,
-    IEnumerable<string> TurnOrder,
-    IEnumerable<bool> PlayerConnectionStatus,
-    IEnumerable<IEnumerable<string>> Pieces);
+namespace BoredGames.Apologies.Models;
 
 [UsedImplicitly]
 public record DrawCardResponse(

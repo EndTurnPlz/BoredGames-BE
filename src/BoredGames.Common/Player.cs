@@ -1,3 +1,5 @@
+using BoredGames.Common.Game;
+
 namespace BoredGames.Common;
 
 public class Player
@@ -7,7 +9,7 @@ public class Player
     public string Username { get; init; } = "";
     public AbstractGame Game { get; set; } = null!;
 
-    public bool IsConnected { get; set; } = false;
+    public bool IsConnected { get; set; }
 
     public Player(out Guid playerId)
     {
@@ -42,16 +44,14 @@ public class Player
         return _id.GetHashCode();
     }
 
+    internal bool ValidateId(Guid id)
+    {
+        return _id == id;
+    }
+
     ~Player()
     {
         PlayerMap.Remove(_id);
-        Game.LeaveGame(this);
-    }
-
-    public void Disconnect()
-    {
-        IsConnected = false;
-        Game.LeaveGame(this);
     }
 
     public static Player? GetPlayer(Guid playerId)

@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics.Contracts;
 using BoredGames.Apologies.Deck;
-using BoredGames.Apologies.EndpointObjects;
+using BoredGames.Apologies.Models;
 
 namespace BoredGames.Apologies.Board;
 

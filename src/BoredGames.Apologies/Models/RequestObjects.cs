@@ -1,4 +1,4 @@
-namespace BoredGames.Apologies.EndpointObjects;
+namespace BoredGames.Apologies.Models;
 
 public record MovePawnRequest(
     Move Move,

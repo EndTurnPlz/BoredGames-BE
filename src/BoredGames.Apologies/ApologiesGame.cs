@@ -1,84 +1,43 @@
 using BoredGames.Apologies.Board;
-using BoredGames.Apologies.EndpointObjects;
 using BoredGames.Apologies.Deck;
+using BoredGames.Apologies.Models;
 using BoredGames.Common;
-using BoredGames.Common.Exceptions;
+using BoredGames.Common.Game;
 
 namespace BoredGames.Apologies;
 
-public sealed class ApologiesGame : AbstractGame
+public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame
 {
     private readonly CardDeck _cardDeck = new();
     private readonly GameBoard _gameBoard = new();
-    private readonly List<Player> _players = [];
-    private Phase GamePhase { get; set; } = Phase.Lobby;
+    private readonly Player[] _players = players.ToArray();
+    private State GameState { get; set; } = State.P1Draw;
     private MovePawnRequest? _lastCompletedMove;
     private readonly int[] _playerStatsPawnsKilled = Enumerable.Repeat(0, 4).ToArray();
     private readonly int[] _playerStatsMovesMade = Enumerable.Repeat(0, 4).ToArray();
     private readonly long _gameStartTimestamp = DateTime.Now.Ticks;
 
-    public ApologiesGame(Player host) : base(host)
-    {
-        JoinGame(host);
-    }
-    
-    public override void JoinGame(Player player)
-    {
-        if (GamePhase != Phase.Lobby) throw new JoinGameException("Game already started");
-        if (_players.Contains(player)) throw new JoinGameException("Player already joined");
-        if (_players.Count == 4) throw new JoinGameException("Game is full");
-        
-        _players.Add(player);
-        player.Game = this;
-        CurrentView += 1;
-    }
-    
-    public override void LeaveGame(Player player)
-    {
-        if (!_players.Contains(player)) return;
-        CurrentView++;
-        
-        if (GamePhase != Phase.Lobby) return;
-        _players.Remove(player);
-
-        if (_players.Count == 0) {
-            GamePhase = Phase.End;
-            _players.Clear();
-        }
-        
-        if (player == Host) Host = _players.First();
-    }
-
-    public override bool StartGame(Player player)
-    {
-        if (player != Host) return false;
-        if (_players.Count < 4) return false;
-        AdvanceGamePhase();
-        CurrentView += 1;
-        return true;
-    }
-    
     private bool IsCorrectPlayerDrawing(Player player)
     {
-        var playerIndex = _players.IndexOf(player);
-        return GamePhase switch 
+        var playerIndex = Array.IndexOf(_players, player);
+        return GameState switch 
         {
-            Phase.P1Draw => playerIndex == 0,
-            Phase.P2Draw => playerIndex == 1,
-            Phase.P3Draw => playerIndex == 2,
-            Phase.P4Draw => playerIndex == 3,
+            State.P1Draw => playerIndex == 0,
+            State.P2Draw => playerIndex == 1,
+            State.P3Draw => playerIndex == 2,
+            State.P4Draw => playerIndex == 3,
             _ => false
         };
     }
     
     private bool IsCorrectPlayerMoving(Player player)
     {
-        var playerIndex = _players.IndexOf(player);
-        return GamePhase switch {
-            Phase.P1Move => playerIndex == 0,
-            Phase.P2Move => playerIndex == 1,
-            Phase.P3Move => playerIndex == 2,
-            Phase.P4Move => playerIndex == 3,
+        var playerIndex = Array.IndexOf(_players, player);
+        return GameState switch {
+            State.P1Move => playerIndex == 0,
+            State.P2Move => playerIndex == 1,
+            State.P3Move => playerIndex == 2,
+            State.P4Move => playerIndex == 3,
             _ => false
         };
     }
@@ -88,12 +47,12 @@ public sealed class ApologiesGame : AbstractGame
         if (!IsCorrectPlayerDrawing(player)) return null;
 
         var lastDrawn = _cardDeck.DrawCard();
-        var validMoves = _gameBoard.GetValidMovesForPlayer(_players.IndexOf(player), lastDrawn);
+        var validMoves = _gameBoard.GetValidMovesForPlayer(Array.IndexOf(_players, player), lastDrawn);
         
         AdvanceGamePhase(validMoves.Count == 0);
-        CurrentView += 1;
+        ViewNum += 1;
         
-        return new DrawCardResponse(CurrentView, (int)lastDrawn, validMoves);
+        return new DrawCardResponse(ViewNum, (int)lastDrawn, validMoves);
     }
 
     public bool MovePawn(MovePawnRequest req, Player player)
@@ -101,12 +60,11 @@ public sealed class ApologiesGame : AbstractGame
         // make sure SplitMove is set only if the last drawn card is a 7
         if (!IsCorrectPlayerMoving(player)) return false;
         
-        var playerIndex = _players.IndexOf(player);
+        var playerIndex = Array.IndexOf(_players, player);
         
         var pawnTilesBeforeMove = _gameBoard.PawnTiles
             .Select(playerTiles => playerTiles.ToArray())
             .ToArray();
-        
         
         if (req.SplitMove is { } splitMove) {
             if (_cardDeck.LastDrawn != CardDeck.CardTypes.Seven) return false;
@@ -127,26 +85,24 @@ public sealed class ApologiesGame : AbstractGame
         
         AdvanceGamePhase();
         _lastCompletedMove = req;
-        CurrentView += 1;
+        ViewNum += 1;
         return true;
     }
 
-    public PullGameStateResponse PullCurrentState()
+    public override ApologiesSnapshot GetSnapshot()
     {
-        return new PullGameStateResponse(
-            CurrentView,
-            (int)GamePhase,
-            (int)_cardDeck.LastDrawn,
+        return new ApologiesSnapshot(
+            ViewNum,
+            GameState,
+            _cardDeck.LastDrawn,
             _lastCompletedMove,
-            _players.IndexOf(Host),
             _players.Select(p => p.Username).ToArray(),
             _players.Select(p => p.IsConnected),
             _gameBoard.PawnTiles.Select(playerTiles => 
                 playerTiles.Select(
                     pawnTiles => pawnTiles.Name
                 )
-            )
-        );
+            ));
     }
 
     public GetEndgameStatsResponse GetStats()
@@ -163,29 +119,27 @@ public sealed class ApologiesGame : AbstractGame
 
         var drawAgain = _cardDeck.LastDrawn == CardDeck.CardTypes.Two;
 
-        var nextGamePhase = gameWon ? Phase.End : GamePhase switch {
-            Phase.Lobby => Phase.P1Draw,
-            Phase.P1Draw => noMoves ? Phase.P2Draw : Phase.P1Move,
-            Phase.P1Move => drawAgain ? Phase.P1Draw : Phase.P2Draw,
-            Phase.P2Draw => noMoves ? Phase.P3Draw : Phase.P2Move,
-            Phase.P2Move => drawAgain ? Phase.P2Draw : Phase.P3Draw,
-            Phase.P3Draw => noMoves ? Phase.P4Draw : Phase.P3Move,
-            Phase.P3Move => drawAgain ? Phase.P3Draw : Phase.P4Draw,
-            Phase.P4Draw => noMoves ? Phase.P1Draw : Phase.P4Move,
-            Phase.P4Move => drawAgain ? Phase.P4Draw : Phase.P1Draw,
-            _ => GamePhase
+        var nextGamePhase = gameWon ? State.End : GameState switch {
+            State.P1Draw => noMoves ? State.P2Draw : State.P1Move,
+            State.P1Move => drawAgain ? State.P1Draw : State.P2Draw,
+            State.P2Draw => noMoves ? State.P3Draw : State.P2Move,
+            State.P2Move => drawAgain ? State.P2Draw : State.P3Draw,
+            State.P3Draw => noMoves ? State.P4Draw : State.P3Move,
+            State.P3Move => drawAgain ? State.P3Draw : State.P4Draw,
+            State.P4Draw => noMoves ? State.P1Draw : State.P4Move,
+            State.P4Move => drawAgain ? State.P4Draw : State.P1Draw,
+            _ => GameState
         };
         
-        GamePhase = nextGamePhase;
+        GameState = nextGamePhase;
     }
 
-    private enum Phase
+    public enum State
     {
         P1Draw, P1Move,
         P2Draw, P2Move,
         P3Draw, P3Move,
         P4Draw, P4Move,
-        Lobby,
         End,
     }
 }

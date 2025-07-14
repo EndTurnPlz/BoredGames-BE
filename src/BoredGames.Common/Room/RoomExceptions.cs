@@ -1,0 +1,11 @@
+namespace BoredGames.Common.Room;
+
+public abstract class RoomException(string message): Exception(message);
+
+public sealed class RoomIsFullException() : RoomException("Room is already full");
+
+public sealed class RoomNotFoundException() : RoomException("Room was not found");
+
+public sealed class RoomCannotStartException() : RoomException("Invalid start conditions");
+public sealed class PlayerNotHostException() : RoomException("Player is not host");
+public sealed class PlayerNotFoundException() : RoomException("Player Not Found");
