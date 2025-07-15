@@ -9,8 +9,4 @@
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" Version="2024.3.0"/>
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Room\Models\" />
-    </ItemGroup>
 </Project>

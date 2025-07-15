@@ -6,6 +6,7 @@ public class GameRoom
 {
     public int ViewNum { get; private set; }
     public Guid Id { get; } = Guid.NewGuid();
+    private DateTime CreatedAt { get; } = DateTime.Now;
     private readonly Player _host;
     private readonly List<Player> _players = [];
     public State CurrentState { get; private set; } = State.WaitingForPlayers;
@@ -13,6 +14,17 @@ public class GameRoom
     private readonly AbstractGameConfig _gameConfig;
     public AbstractGame? Game; // Make this private in a later refactor
     
+    private static TimeSpan AbandonedTimeout => TimeSpan.FromMinutes(5);
+
+    public bool IsDead()
+    {
+        if (CurrentState is State.GameInProgress) return false;
+        if (DateTime.Now - CreatedAt > AbandonedTimeout) return true;
+        if (_players.Count == 0) return true;
+
+        return false;
+    }
+
     public GameRoom(Player host, AbstractGameConfig gameConfig)
     {
         _gameConfig = gameConfig;
@@ -36,7 +48,6 @@ public class GameRoom
         ViewNum++;
         
         if (player == _host) {
-            CurrentState = State.Dead;
             _players.Clear();
             return;
         }
@@ -51,7 +62,7 @@ public class GameRoom
         if (_players.Count < _gameConfig.MinPlayerCount) throw new RoomCannotStartException();
         
         Game = Activator.CreateInstance(_gameConfig.GameType) as AbstractGame;
-        CurrentState = State.GameStarted;
+        CurrentState = State.GameInProgress;
     }
     
     public IGameSnapshot? GetGameSnapshot() => Game?.GetSnapshot();
@@ -61,8 +72,7 @@ public class GameRoom
     public enum State
     {
         WaitingForPlayers,
-        GameStarted,
+        GameInProgress,
         GameEnded, // Implement this when there's a single game action function
-        Dead
     }
 }

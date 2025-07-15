@@ -17,22 +17,30 @@ public static class RoomManager
         Task.Run(async () =>
         {
             using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
-            try {
-                while (await timer.WaitForNextTickAsync(TickerCts.Token)) {
-                    try { 
-                        foreach (var room in Rooms.Values) {
-                            if (room.CurrentState is not GameRoom.State.Dead) continue;
-                            while (Rooms.TryRemove(room.Id, out _)) { }
-                        }
-                    }
-                    catch (Exception ex) {
+            try
+            {
+                while (await timer.WaitForNextTickAsync(TickerCts.Token))
+                {
+                    try {
+                        CleanupDeadRooms();
+                    } catch (Exception ex) {
                         // Add some actual logging here at some point
                         Console.WriteLine($"An error occurred during the background tick: {ex.Message}");
                     }
                 }
             }
-            catch (OperationCanceledException) { }  // This is expected on a graceful shutdown.
+            catch (OperationCanceledException) { } // This is expected on a graceful shutdown.
         });
+    }
+    
+    private static void CleanupDeadRooms()
+    {
+        var deadRoomIds = Rooms.Where(pair => pair.Value.IsDead()).Select(pair => pair.Key);
+
+        foreach (var id in deadRoomIds)
+        {
+            Rooms.TryRemove(id, out _);
+        }
     }
     
     public static void StopService()
