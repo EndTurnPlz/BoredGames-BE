@@ -61,7 +61,7 @@ public class GameRoom
         if (!_host.ValidateId(playerId)) throw new PlayerNotHostException();
         if (_players.Count < _gameConfig.MinPlayerCount) throw new RoomCannotStartException();
         
-        Game = Activator.CreateInstance(_gameConfig.GameType) as AbstractGame;
+        Game = Activator.CreateInstance(_gameConfig.GameType, _players.AsReadOnly()) as AbstractGame;
         CurrentState = State.GameInProgress;
     }
     

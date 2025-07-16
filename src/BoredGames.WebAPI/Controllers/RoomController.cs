@@ -79,7 +79,7 @@ public class RoomController : ControllerBase
     [Produces("text/event-stream")]
     [HttpGet("{roomId:guid}/stream")]
     public async Task ConnectToRoom([FromRoute] Guid roomId, 
-        [FromHeader(Name = "X-Player-Key")] Guid playerId, 
+        [FromQuery] Guid playerId, 
         CancellationToken cancellationToken)
     {
         Response.Headers.CacheControl = "no-cache";
