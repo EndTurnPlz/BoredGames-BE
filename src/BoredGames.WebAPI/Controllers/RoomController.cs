@@ -40,9 +40,11 @@ public class RoomController : ControllerBase
         
         try {
             RoomManager.JoinRoom(roomId, player);
-        } catch (RoomException ex) {
+        } 
+        catch (RoomException ex) {
             return BadRequest(ex.Message);
         }
+        
 
         return Ok(new { playerId });
     }
@@ -51,7 +53,6 @@ public class RoomController : ControllerBase
     [HttpPost("{roomId:guid}/startGame")]
     public ActionResult StartGame([FromRoute] Guid roomId, [FromHeader(Name = "X-Player-Key")] Guid playerId)
     {
-        
         try {
             var room = RoomManager.GetRoom(roomId);
             room.StartGame(playerId);
@@ -65,15 +66,14 @@ public class RoomController : ControllerBase
     [HttpGet("{roomId:guid}/snapshot")]
     public ActionResult<RoomSnapshot> GetSnapshot([FromRoute] Guid roomId)
     {
-        GameRoom room;
         try {
-            room = RoomManager.GetRoom(roomId);
-        } catch (RoomException ex) {
+            var room = RoomManager.GetRoom(roomId);
+            var snapshot = new RoomSnapshot(room.CurrentState, room.GetPlayerNames(), room.GetGameSnapshot());
+            return Ok(snapshot);
+        } 
+        catch (RoomException ex) {
             return BadRequest(ex.Message);
         }
-        
-        var snapshot = new RoomSnapshot(room.CurrentState, room.GetPlayerNames(), room.GetGameSnapshot());
-        return Ok(snapshot);
     }
 
     [Produces("text/event-stream")]
@@ -96,10 +96,12 @@ public class RoomController : ControllerBase
                 await Response.Body.FlushAsync(cancellationToken);
                 await Task.Delay(250, cancellationToken);
             }
-        } catch (Exception ex) when (ex is RoomException) {
+        } 
+        catch (Exception ex) when (ex is RoomException) {
             Response.StatusCode = 404;
             
-        } catch (Exception ex) when (ex is OperationCanceledException or InvalidOperationException) {
+        } 
+        catch (Exception ex) when (ex is OperationCanceledException or InvalidOperationException) {
             throw new NotImplementedException();
         } 
     }

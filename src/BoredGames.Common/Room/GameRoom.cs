@@ -16,6 +16,13 @@ public class GameRoom
     
     private static TimeSpan AbandonedTimeout => TimeSpan.FromMinutes(5);
 
+    public GameRoom(Player host, AbstractGameConfig gameConfig)
+    {
+        _gameConfig = gameConfig;
+        _host = host;
+        Join(host);
+    }
+    
     public bool IsDead()
     {
         if (CurrentState is State.GameInProgress) return false;
@@ -23,13 +30,6 @@ public class GameRoom
         if (_players.Count == 0) return true;
 
         return false;
-    }
-
-    public GameRoom(Player host, AbstractGameConfig gameConfig)
-    {
-        _gameConfig = gameConfig;
-        _host = host;
-        Join(host);
     }
 
     public void Join(Player player)
@@ -58,7 +58,7 @@ public class GameRoom
     public void StartGame(Guid playerId)
     {
         if (CurrentState is not State.WaitingForPlayers) throw new RoomCannotStartException();
-        if (_host.ValidateId(playerId)) throw new PlayerNotHostException();
+        if (!_host.ValidateId(playerId)) throw new PlayerNotHostException();
         if (_players.Count < _gameConfig.MinPlayerCount) throw new RoomCannotStartException();
         
         Game = Activator.CreateInstance(_gameConfig.GameType) as AbstractGame;

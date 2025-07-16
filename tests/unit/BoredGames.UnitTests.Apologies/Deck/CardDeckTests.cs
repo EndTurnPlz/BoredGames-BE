@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 namespace BoredGames.UnitTests.Apologies.Deck;
 
 [TestSubject(typeof(CardDeck))]
-public class CardDeckTest
+public class CardDeckTests
 {
     private static readonly CardDeck.CardTypes[] ValidCardTypes = 
         Enum.GetValues<CardDeck.CardTypes>()

@@ -17,7 +17,7 @@ public class ApologiesController : ControllerBase
         if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
 
         var game = (ApologiesGame)Player.GetPlayer(playerId)!.Game;
-        if (game.DrawCard(Player.GetPlayer(playerId)!) is not { } moveList) 
+        if (game.DrawAction(Player.GetPlayer(playerId)!) is not { } moveList) 
             return Problem(statusCode: 422, detail: "Incorrect Player");
 
         return Ok(moveList);
@@ -29,7 +29,7 @@ public class ApologiesController : ControllerBase
         if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
 
         var game = (ApologiesGame)Player.GetPlayer(playerId)!.Game;
-        if (!game.MovePawn(req, Player.GetPlayer(playerId)!)) return BadRequest("Invalid move");
+        if (!game.MoveAction(req, Player.GetPlayer(playerId)!)) return BadRequest("Invalid move");
 
         return Ok();
     }

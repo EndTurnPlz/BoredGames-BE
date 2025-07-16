@@ -16,33 +16,35 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame
     private readonly int[] _playerStatsPawnsKilled = Enumerable.Repeat(0, 4).ToArray();
     private readonly int[] _playerStatsMovesMade = Enumerable.Repeat(0, 4).ToArray();
     private readonly long _gameStartTimestamp = DateTime.Now.Ticks;
-
-    private bool IsCorrectPlayerDrawing(Player player)
-    {
-        var playerIndex = Array.IndexOf(_players, player);
-        return GameState switch 
-        {
-            State.P1Draw => playerIndex == 0,
-            State.P2Draw => playerIndex == 1,
-            State.P3Draw => playerIndex == 2,
-            State.P4Draw => playerIndex == 3,
-            _ => false
-        };
-    }
     
-    private bool IsCorrectPlayerMoving(Player player)
+    public override bool HasEnded() => GameState == State.End;
+
+    public enum State
     {
-        var playerIndex = Array.IndexOf(_players, player);
-        return GameState switch {
-            State.P1Move => playerIndex == 0,
-            State.P2Move => playerIndex == 1,
-            State.P3Move => playerIndex == 2,
-            State.P4Move => playerIndex == 3,
-            _ => false
-        };
+        P1Draw, P1Move,
+        P2Draw, P2Move,
+        P3Draw, P3Move,
+        P4Draw, P4Move,
+        End,
     }
 
-    public DrawCardResponse? DrawCard(Player player)
+    public override ApologiesSnapshot GetSnapshot()
+    {
+        return new ApologiesSnapshot(
+            ViewNum,
+            GameState,
+            _cardDeck.LastDrawn,
+            _lastCompletedMove,
+            _players.Select(p => p.Username).ToArray(),
+            _players.Select(p => p.IsConnected),
+            _gameBoard.PawnTiles.Select(playerTiles => 
+                playerTiles.Select(
+                    pawnTiles => pawnTiles.Name
+                )
+            ));
+    }
+
+    public DrawCardResponse? DrawAction(Player player)
     {
         if (!IsCorrectPlayerDrawing(player)) return null;
 
@@ -55,7 +57,7 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame
         return new DrawCardResponse(ViewNum, (int)lastDrawn, validMoves);
     }
 
-    public bool MovePawn(MovePawnArgs req, Player player)
+    public bool MoveAction(MovePawnArgs req, Player player)
     {
         // make sure SplitMove is set only if the last drawn card is a 7
         if (!IsCorrectPlayerMoving(player)) return false;
@@ -89,22 +91,6 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame
         return true;
     }
 
-    public override ApologiesSnapshot GetSnapshot()
-    {
-        return new ApologiesSnapshot(
-            ViewNum,
-            GameState,
-            _cardDeck.LastDrawn,
-            _lastCompletedMove,
-            _players.Select(p => p.Username).ToArray(),
-            _players.Select(p => p.IsConnected),
-            _gameBoard.PawnTiles.Select(playerTiles => 
-                playerTiles.Select(
-                    pawnTiles => pawnTiles.Name
-                )
-            ));
-    }
-
     public EndgameStatsResponse GetStats()
     {
         return new EndgameStatsResponse(_playerStatsMovesMade, _playerStatsPawnsKilled, 
@@ -134,14 +120,28 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame
         GameState = nextGamePhase;
     }
     
-    public override bool HasEnded() => GameState == State.End;
-
-    public enum State
+    private bool IsCorrectPlayerDrawing(Player player)
     {
-        P1Draw, P1Move,
-        P2Draw, P2Move,
-        P3Draw, P3Move,
-        P4Draw, P4Move,
-        End,
+        var playerIndex = Array.IndexOf(_players, player);
+        return GameState switch 
+        {
+            State.P1Draw => playerIndex == 0,
+            State.P2Draw => playerIndex == 1,
+            State.P3Draw => playerIndex == 2,
+            State.P4Draw => playerIndex == 3,
+            _ => false
+        };
+    }
+    
+    private bool IsCorrectPlayerMoving(Player player)
+    {
+        var playerIndex = Array.IndexOf(_players, player);
+        return GameState switch {
+            State.P1Move => playerIndex == 0,
+            State.P2Move => playerIndex == 1,
+            State.P3Move => playerIndex == 2,
+            State.P4Move => playerIndex == 3,
+            _ => false
+        };
     }
 }
