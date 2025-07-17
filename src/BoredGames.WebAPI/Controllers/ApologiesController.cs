@@ -2,6 +2,7 @@ using BoredGames.Apologies;
 using BoredGames.Apologies.Models;
 using BoredGames.Common;
 using BoredGames.Common.Game;
+using BoredGames.Common.Room;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BoredGames.Controllers;
@@ -32,6 +33,19 @@ public class ApologiesController : ControllerBase
         if (!game.MoveAction(req, Player.GetPlayer(playerId)!)) return BadRequest("Invalid move");
 
         return Ok();
+    }
+
+    [Produces("application/json")]
+    [HttpGet("{roomId:guid}/snapshot")]
+    public ActionResult<ApologiesSnapshot> GetSnapshot([FromRoute] Guid roomId)
+    {
+        try {
+            var room = RoomManager.GetRoom(roomId);
+            return Ok(room.GetGameSnapshot());
+        } 
+        catch (RoomException ex) {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpGet("stats")]

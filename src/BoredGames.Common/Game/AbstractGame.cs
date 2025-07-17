@@ -14,3 +14,8 @@ public interface IGameSnapshot
 {
     int ViewNum { get; }
 }
+
+public enum GameTypes
+{
+    Apologies
+}

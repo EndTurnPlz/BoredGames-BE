@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using BoredGames.Common;
 using BoredGames.Common.Game;
 using BoredGames.Common.Room;
@@ -45,7 +46,6 @@ public class RoomController : ControllerBase
             return BadRequest(ex.Message);
         }
         
-
         return Ok(new { playerId });
     }
 
@@ -78,6 +78,7 @@ public class RoomController : ControllerBase
 
     [Produces("text/event-stream")]
     [HttpGet("{roomId:guid}/stream")]
+    [SuppressMessage("ReSharper.DPA", "DPA0011: High execution time of MVC action", MessageId = "time: 148567ms")]
     public async Task ConnectToRoom([FromRoute] Guid roomId, 
         [FromQuery] Guid playerId, 
         CancellationToken cancellationToken)

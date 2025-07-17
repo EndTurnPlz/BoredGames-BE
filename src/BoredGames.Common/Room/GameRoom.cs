@@ -83,6 +83,11 @@ public class GameRoom
         
         Game = Activator.CreateInstance(_gameConfig.GameType, _players.AsReadOnly()) as AbstractGame;
         CurrentState = State.GameInProgress;
+        
+        // DELETE LATER
+        foreach (var player in _players) {
+            player.Game = Game!;
+        }
         ViewNum++;
     }
     

@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using BoredGames;
 
 var appBuilder = WebApplication.CreateBuilder(args);
 //appBuilder.Logging.ClearProviders();
@@ -8,6 +9,7 @@ appBuilder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         // This converter tells the serializer to handle all enums as strings
+        options.JsonSerializerOptions.TypeInfoResolver = new GameSnapshotResolver();
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
@@ -15,7 +17,7 @@ appBuilder.Services.AddEndpointsApiExplorer();
 appBuilder.Services.AddSwaggerGen(options =>
 {
     // Add this line to tell Swagger to also use string enums
-    options.AddServer(new Microsoft.OpenApi.Models.OpenApiServer() { Url = "http://localhost:5000" });
+    options.AddServer(new Microsoft.OpenApi.Models.OpenApiServer { Url = "http://localhost:5000" });
     options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "My API", Version = "v1" });
 });
 
@@ -44,7 +46,6 @@ app.MapControllers();
 
 // Handle application shutdown
 app.Services.GetRequiredService<IHostApplicationLifetime>()
-    .ApplicationStopping.Register(BoredGames.RoomManager.StopService);
-
+    .ApplicationStopping.Register(RoomManager.StopService);
 
 app.Run();
