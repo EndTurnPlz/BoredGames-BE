@@ -20,7 +20,7 @@ public class GameRoom
     {
         _gameConfig = gameConfig;
         _host = host;
-        Join(host);
+        AddPlayer(host);
     }
     
     public bool IsDead()
@@ -32,7 +32,7 @@ public class GameRoom
         return false;
     }
 
-    public void Join(Player player)
+    public void AddPlayer(Player player)
     {
         if (CurrentState is not State.WaitingForPlayers) throw new RoomNotFoundException();
         if (_players.Count >= _gameConfig.MaxPlayerCount) throw new RoomIsFullException();
@@ -41,7 +41,27 @@ public class GameRoom
         _players.Add(player);
     }
 
-    public void Leave(Player player)
+    public void RegisterPlayerConnected(Guid playerId)
+    {
+        if (!_players.Any(p => p.ValidateId(playerId))) throw new PlayerNotFoundException();
+        
+        var player = _players.First(p => p.ValidateId(playerId));
+        player.IsConnected = true;
+    }
+
+    public void RegisterPlayerDisconnected(Guid playerId)
+    {
+        if (!_players.Any(p => p.ValidateId(playerId))) throw new PlayerNotFoundException();
+        
+        var player = _players.First(p => p.ValidateId(playerId));
+        player.IsConnected = false;
+
+        if (CurrentState is not State.GameInProgress) {
+            RemovePlayer(player);
+        } 
+    }
+
+    private void RemovePlayer(Player player)
     {
         if (!_players.Contains(player)) throw new PlayerNotFoundException();
         
@@ -63,6 +83,7 @@ public class GameRoom
         
         Game = Activator.CreateInstance(_gameConfig.GameType, _players.AsReadOnly()) as AbstractGame;
         CurrentState = State.GameInProgress;
+        ViewNum++;
     }
     
     public IGameSnapshot? GetGameSnapshot() => Game?.GetSnapshot();

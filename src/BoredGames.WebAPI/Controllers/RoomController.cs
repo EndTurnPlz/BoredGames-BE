@@ -85,9 +85,10 @@ public class RoomController : ControllerBase
         Response.Headers.CacheControl = "no-cache";
         Response.Headers.Connection = "keep-alive";
         Response.Headers.ContentType = "text/event-stream";
-        
+
         try {
-            // establish player connected
+            var room = RoomManager.GetRoom(roomId);
+            room.RegisterPlayerConnected(playerId);
             while (!cancellationToken.IsCancellationRequested) {
                 var viewNum = RoomManager.GetRoomViewNum(roomId);
                 var sseData = $"data: {viewNum}\n\n";
@@ -97,12 +98,12 @@ public class RoomController : ControllerBase
                 await Task.Delay(250, cancellationToken);
             }
         } 
+        catch (Exception ex) when (ex is OperationCanceledException or InvalidOperationException) {
+            var room = RoomManager.GetRoom(roomId);
+            room.RegisterPlayerDisconnected(playerId);
+        } 
         catch (Exception ex) when (ex is RoomException) {
             Response.StatusCode = 404;
-            
-        } 
-        catch (Exception ex) when (ex is OperationCanceledException or InvalidOperationException) {
-            throw new NotImplementedException();
-        } 
+        }
     }
 }

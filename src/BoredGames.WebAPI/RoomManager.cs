@@ -65,7 +65,7 @@ public static class RoomManager
     
     public static void JoinRoom(Guid roomId, Player player)
     {
-        GetRoom(roomId).Join(player);
+        GetRoom(roomId).AddPlayer(player);
     }
     
     [Pure]
