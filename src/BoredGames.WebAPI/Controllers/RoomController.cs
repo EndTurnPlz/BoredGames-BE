@@ -48,19 +48,6 @@ public class RoomController : ControllerBase
         
         return Ok(new { playerId });
     }
-
-    [Produces("application/json")]
-    [HttpPost("{roomId:guid}/startGame")]
-    public ActionResult StartGame([FromRoute] Guid roomId, [FromHeader(Name = "X-Player-Key")] Guid playerId)
-    {
-        try {
-            var room = RoomManager.GetRoom(roomId);
-            room.StartGame(playerId);
-        } catch (RoomException ex) {
-            return BadRequest(ex.Message);
-        }
-        return Ok();
-    }
     
     [Produces("application/json")]
     [HttpGet("{roomId:guid}/snapshot")]

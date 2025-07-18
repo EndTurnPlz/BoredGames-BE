@@ -6,7 +6,7 @@ using BoredGames.Common.Game;
 
 namespace BoredGames.Apologies;
 
-public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame(players)
+public sealed class ApologiesGame(IEnumerable<Player> players) : GameBase(players)
 {
     private readonly CardDeck _cardDeck = new();
     private readonly GameBoard _gameBoard = new();

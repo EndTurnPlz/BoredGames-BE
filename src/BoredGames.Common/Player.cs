@@ -7,7 +7,7 @@ public class Player
     private static readonly Dictionary<Guid, Player> PlayerMap = new();
     private readonly Guid _id = Guid.NewGuid();
     public string Username { get; init; } = "";
-    public AbstractGame Game { get; set; } = null!;
+    public GameBase GameBase { get; set; } = null!;
 
     public bool IsConnected { get; set; }
 

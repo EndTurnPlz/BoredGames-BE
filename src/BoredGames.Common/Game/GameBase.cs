@@ -1,6 +1,6 @@
 namespace BoredGames.Common.Game;
 
-public abstract class AbstractGame(IEnumerable<Player> players)
+public abstract class GameBase(IEnumerable<Player> players)
 {
     public int ViewNum { get; protected set; }
     public abstract IGameSnapshot GetSnapshot();

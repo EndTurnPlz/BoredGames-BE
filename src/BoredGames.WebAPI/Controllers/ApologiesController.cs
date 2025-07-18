@@ -17,7 +17,7 @@ public class ApologiesController : ControllerBase
     {
         if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
 
-        var game = (ApologiesGame)Player.GetPlayer(playerId)!.Game;
+        var game = (ApologiesGame)Player.GetPlayer(playerId)!.GameBase;
         if (game.DrawAction(Player.GetPlayer(playerId)!) is not { } moveList) 
             return Problem(statusCode: 422, detail: "Incorrect Player");
 
@@ -29,7 +29,7 @@ public class ApologiesController : ControllerBase
     {
         if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
 
-        var game = (ApologiesGame)Player.GetPlayer(playerId)!.Game;
+        var game = (ApologiesGame)Player.GetPlayer(playerId)!.GameBase;
         if (!game.MoveAction(req, Player.GetPlayer(playerId)!)) return BadRequest("Invalid move");
 
         return Ok();
@@ -53,7 +53,7 @@ public class ApologiesController : ControllerBase
     {
         if (PlayerValidityErrors(playerId) is { } errResult) return errResult;
 
-        var game = (ApologiesGame)Player.GetPlayer(playerId)!.Game;
+        var game = (ApologiesGame)Player.GetPlayer(playerId)!.GameBase;
         
         try {
             return Ok(game.GetStats());
@@ -65,7 +65,7 @@ public class ApologiesController : ControllerBase
     private BadRequestObjectResult? PlayerValidityErrors(Guid playerId)
     {
         if (Player.GetPlayer(playerId) is not {} client) return BadRequest("Invalid player id");
-        if (client.Game is not ApologiesGame) return BadRequest("Invalid player id");
+        if (client.GameBase is not ApologiesGame) return BadRequest("Invalid player id");
         
         return null;
     }

@@ -11,12 +11,12 @@ public class GameRoom
     private readonly List<Player> _players = [];
     public State CurrentState { get; private set; } = State.WaitingForPlayers;
 
-    private readonly AbstractGameConfig _gameConfig;
-    public AbstractGame? Game; // Make this private in a later refactor
+    private readonly GameConfig _gameConfig;
+    public GameBase? Game; // Make this private in a later refactor
     
     private static TimeSpan AbandonedTimeout => TimeSpan.FromMinutes(5);
 
-    public GameRoom(Player host, AbstractGameConfig gameConfig)
+    public GameRoom(Player host, GameConfig gameConfig)
     {
         _gameConfig = gameConfig;
         _host = host;
@@ -79,14 +79,12 @@ public class GameRoom
     {
         if (CurrentState is not State.WaitingForPlayers) throw new RoomCannotStartException();
         if (!_host.ValidateId(playerId)) throw new PlayerNotHostException();
-        if (_players.Count < _gameConfig.MinPlayerCount) throw new RoomCannotStartException();
-        
-        Game = Activator.CreateInstance(_gameConfig.GameType, _players.AsReadOnly()) as AbstractGame;
+        Game = _gameConfig.CreateGameInstance(_players);
         CurrentState = State.GameInProgress;
         
         // DELETE LATER
         foreach (var player in _players) {
-            player.Game = Game!;
+            player.GameBase = Game!;
         }
         ViewNum++;
     }
