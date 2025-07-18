@@ -64,12 +64,9 @@ public class ApologiesController : ControllerBase
 
     private BadRequestObjectResult? PlayerValidityErrors(Guid playerId)
     {
-        if (Player.GetPlayer(playerId) is null) return BadRequest("Invalid player id");
-
-        var client = Player.GetPlayer(playerId)!;
+        if (Player.GetPlayer(playerId) is not {} client) return BadRequest("Invalid player id");
         if (client.Game is not ApologiesGame) return BadRequest("Invalid player id");
-        if (!client.Game.HasStarted) return BadRequest("Game has not started yet");
-
+        
         return null;
     }
 }
