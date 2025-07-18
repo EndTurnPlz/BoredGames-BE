@@ -6,11 +6,10 @@ using BoredGames.Common.Game;
 
 namespace BoredGames.Apologies;
 
-public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame
+public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame(players)
 {
     private readonly CardDeck _cardDeck = new();
     private readonly GameBoard _gameBoard = new();
-    private readonly Player[] _players = players.ToArray();
     private State GameState { get; set; } = State.P1Draw;
     private MovePawnArgs? _lastCompletedMove;
     private readonly int[] _playerStatsPawnsKilled = Enumerable.Repeat(0, 4).ToArray();
@@ -35,8 +34,8 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame
             GameState,
             _cardDeck.LastDrawn,
             _lastCompletedMove,
-            _players.Select(p => p.Username).ToArray(),
-            _players.Select(p => p.IsConnected),
+            Players.Select(p => p.Username).ToArray(),
+            Players.Select(p => p.IsConnected),
             _gameBoard.PawnTiles.Select(playerTiles => 
                 playerTiles.Select(
                     pawnTiles => pawnTiles.Name
@@ -49,7 +48,7 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame
         if (!IsCorrectPlayerDrawing(player)) return null;
 
         var lastDrawn = _cardDeck.DrawCard();
-        var validMoves = _gameBoard.GetValidMovesForPlayer(Array.IndexOf(_players, player), lastDrawn);
+        var validMoves = _gameBoard.GetValidMovesForPlayer(Array.IndexOf(Players, player), lastDrawn);
         
         AdvanceGamePhase(validMoves.Count == 0);
         ViewNum += 1;
@@ -62,7 +61,7 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame
         // make sure SplitMove is set only if the last drawn card is a 7
         if (!IsCorrectPlayerMoving(player)) return false;
         
-        var playerIndex = Array.IndexOf(_players, player);
+        var playerIndex = Array.IndexOf(Players, player);
         
         var pawnTilesBeforeMove = _gameBoard.PawnTiles
             .Select(playerTiles => playerTiles.ToArray())
@@ -122,7 +121,7 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame
     
     private bool IsCorrectPlayerDrawing(Player player)
     {
-        var playerIndex = Array.IndexOf(_players, player);
+        var playerIndex = Array.IndexOf(Players, player);
         return GameState switch 
         {
             State.P1Draw => playerIndex == 0,
@@ -135,7 +134,7 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : AbstractGame
     
     private bool IsCorrectPlayerMoving(Player player)
     {
-        var playerIndex = Array.IndexOf(_players, player);
+        var playerIndex = Array.IndexOf(Players, player);
         return GameState switch {
             State.P1Move => playerIndex == 0,
             State.P2Move => playerIndex == 1,

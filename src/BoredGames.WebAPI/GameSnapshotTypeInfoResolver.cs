@@ -4,7 +4,7 @@ using BoredGames.Common.Game;
 
 namespace BoredGames;
 
-public class GameSnapshotResolver : DefaultJsonTypeInfoResolver
+public class GameSnapshotTypeInfoResolver : DefaultJsonTypeInfoResolver
 {
     public override JsonTypeInfo GetTypeInfo(Type type, JsonSerializerOptions options)
     {

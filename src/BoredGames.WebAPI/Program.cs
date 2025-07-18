@@ -9,7 +9,7 @@ appBuilder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         // This converter tells the serializer to handle all enums as strings
-        options.JsonSerializerOptions.TypeInfoResolver = new GameSnapshotResolver();
+        options.JsonSerializerOptions.TypeInfoResolver = new GameSnapshotTypeInfoResolver();
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
