@@ -15,7 +15,6 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : GameBase(player
     private readonly int[] _playerStatsPawnsKilled = Enumerable.Repeat(0, 4).ToArray();
     private readonly int[] _playerStatsMovesMade = Enumerable.Repeat(0, 4).ToArray();
     private readonly long _gameStartTimestamp = DateTime.Now.Ticks;
-    
     public override bool HasEnded() => GameState == State.End;
 
     public enum State
@@ -24,26 +23,30 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : GameBase(player
         P2Draw, P2Move,
         P3Draw, P3Move,
         P4Draw, P4Move,
-        End,
+        End
     }
 
     public override ApologiesSnapshot GetSnapshot()
     {
-        return new ApologiesSnapshot(
-            ViewNum,
-            GameState,
-            _cardDeck.LastDrawn,
-            _lastCompletedMove,
-            Players.Select(p => p.Username).ToArray(),
-            Players.Select(p => p.IsConnected),
-            _gameBoard.PawnTiles.Select(playerTiles => 
-                playerTiles.Select(
-                    pawnTiles => pawnTiles.Name
-                )
-            ));
+        return new ApologiesSnapshot(ViewNum, GameState, _cardDeck.LastDrawn, _lastCompletedMove,
+            Players.Select(p => p.Username).ToArray(), Players.Select(p => p.IsConnected),
+            _gameBoard.PawnTiles.Select(playerTiles => playerTiles.Select(pawnTiles => pawnTiles.Name)));
     }
 
-    public DrawCardResponse? DrawAction(Player player)
+    public override object? ExecuteAction(string action, Player? player = null, IGameActionArgs? args = null)
+    {
+        
+        IReadOnlyDictionary<string, GameAction> actions = new Dictionary<string, GameAction>
+        {
+            ["Draw"] = GameAction.Create(DrawAction), 
+            ["Move"] = GameAction.Create<MovePawnArgs>(MoveAction),
+            ["Stats"] = GameAction.Create(GetStatsAction)
+        };
+        
+        return actions.GetValueOrDefault(action)?.Execute(player, args) ?? null;
+    }
+
+    private DrawCardResponse? DrawAction(Player player)
     {
         if (!IsCorrectPlayerDrawing(player)) return null;
 
@@ -56,7 +59,7 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : GameBase(player
         return new DrawCardResponse(ViewNum, (int)lastDrawn, validMoves);
     }
 
-    public bool MoveAction(MovePawnArgs req, Player player)
+    private object MoveAction(Player player, MovePawnArgs req)
     {
         // make sure SplitMove is set only if the last drawn card is a 7
         if (!IsCorrectPlayerMoving(player)) return false;
@@ -90,7 +93,7 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : GameBase(player
         return true;
     }
 
-    public EndgameStatsResponse GetStats()
+    private EndgameStatsResponse GetStatsAction()
     {
         return new EndgameStatsResponse(_playerStatsMovesMade, _playerStatsPawnsKilled, 
             DateTime.Now.Ticks - _gameStartTimestamp);

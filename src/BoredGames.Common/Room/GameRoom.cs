@@ -81,12 +81,16 @@ public class GameRoom
         if (!_host.ValidateId(playerId)) throw new PlayerNotHostException();
         Game = _gameConfig.CreateGameInstance(_players);
         CurrentState = State.GameInProgress;
-        
-        // DELETE LATER
-        foreach (var player in _players) {
-            player.GameBase = Game!;
-        }
         ViewNum++;
+    }
+
+    public void ExecuteGameAction(string action, Guid? playerId = null, IGameActionArgs? args = null)
+    {
+        if (CurrentState is State.GameInProgress) throw new RoomNotStartedException();
+        
+        var player = playerId is not null ? _players.FirstOrDefault(p => p.ValidateId(playerId)) : null;
+        Game!.ExecuteAction(action, player, args);
+        if (Game!.HasEnded()) CurrentState = State.GameEnded;
     }
     
     public IGameSnapshot? GetGameSnapshot() => Game?.GetSnapshot();
@@ -97,6 +101,6 @@ public class GameRoom
     {
         WaitingForPlayers,
         GameInProgress,
-        GameEnded, // Implement this when there's a single game action function
+        GameEnded
     }
 }

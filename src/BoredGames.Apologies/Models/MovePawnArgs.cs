@@ -1,3 +1,4 @@
+using BoredGames.Common.Game;
 using JetBrains.Annotations;
 
 namespace BoredGames.Apologies.Models;
@@ -5,7 +6,7 @@ namespace BoredGames.Apologies.Models;
 [UsedImplicitly]
 public record MovePawnArgs(
     Move Move,
-    Move? SplitMove);
+    Move? SplitMove) : IGameActionArgs;
     
 [UsedImplicitly]
 public record Move(
