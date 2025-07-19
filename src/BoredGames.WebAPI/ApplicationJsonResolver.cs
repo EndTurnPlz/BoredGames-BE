@@ -72,7 +72,7 @@ public class ApplicationJsonResolver : DefaultJsonTypeInfoResolver
         foreach (var derivedType in derivedTypes) 
         {
             var propInfo = derivedType.GetProperty("ActionName", BindingFlags.Public | BindingFlags.Static);
-            if (propInfo?.GetConstantValue() is not string typeDiscriminator)
+            if (propInfo?.GetValue(null) is not string typeDiscriminator)
             {
                 throw new InvalidOperationException("ActionName property not found on derived type.");
             }
