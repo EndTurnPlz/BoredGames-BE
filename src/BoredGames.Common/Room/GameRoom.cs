@@ -84,13 +84,14 @@ public class GameRoom
         ViewNum++;
     }
 
-    public void ExecuteGameAction(string action, Guid? playerId = null, IGameActionArgs? args = null)
+    public object? ExecuteGameAction(string action, Guid? playerId = null, IGameActionArgs? args = null)
     {
         if (CurrentState is State.GameInProgress) throw new RoomNotStartedException();
         
         var player = playerId is not null ? _players.FirstOrDefault(p => p.ValidateId(playerId)) : null;
-        Game!.ExecuteAction(action, player, args);
+        var result = Game!.ExecuteAction(action, player, args);
         if (Game!.HasEnded()) CurrentState = State.GameEnded;
+        return result;
     }
     
     public IGameSnapshot? GetGameSnapshot() => Game?.GetSnapshot();

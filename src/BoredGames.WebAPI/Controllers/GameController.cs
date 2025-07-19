@@ -15,10 +15,10 @@ public class GameController : ControllerBase
         try {
             var room = RoomManager.GetRoom(roomId);
             room.StartGame(playerId);
+            return Ok();
         } catch (RoomException ex) {
             return BadRequest(ex.Message);
         }
-        return Ok();
     }
     
     [Produces("application/json")]
@@ -28,10 +28,9 @@ public class GameController : ControllerBase
     {
         try {
             var room = RoomManager.GetRoom(roomId);
-            room.ExecuteGameAction(action, playerId, actionArgs);
+            return Ok(room.ExecuteGameAction(action, playerId, actionArgs));
         } catch (Exception ex) when (ex is RoomException or GameException) {
             return BadRequest(ex.Message);
         }
-        return Ok();
     }
 }
