@@ -15,7 +15,6 @@ public class GameAction
     // Factory for: Player-only, no return
     public static GameAction Create(Action<Player> action)
     {
-
         return new GameAction(WrappedAction, typeof(void), true);
         object? WrappedAction(Player? p, IGameActionArgs? _) { action(p!); return null; }
     }
@@ -25,7 +24,6 @@ public class GameAction
     {
         return new GameAction(WrappedAction, typeof(void), false);
         object? WrappedAction(Player? player, IGameActionArgs? gameActionArgs) => action();
-
     }
     
     // Factory for: Player-only, return value
