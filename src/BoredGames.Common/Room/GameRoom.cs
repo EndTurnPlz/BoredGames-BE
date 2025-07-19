@@ -86,7 +86,7 @@ public class GameRoom
 
     public object? ExecuteGameAction(string action, Guid? playerId = null, IGameActionArgs? args = null)
     {
-        if (CurrentState is State.GameInProgress) throw new RoomNotStartedException();
+        if (CurrentState is not State.GameInProgress) throw new RoomNotStartedException();
         
         var player = playerId is not null ? _players.FirstOrDefault(p => p.ValidateId(playerId)) : null;
         var result = Game!.ExecuteAction(action, player, args);
