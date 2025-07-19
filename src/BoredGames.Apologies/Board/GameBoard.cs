@@ -46,9 +46,9 @@ public class GameBoard
         ];
     }
 
-    public List<Moveset> GetValidMovesForPlayer(int playerIndex, CardDeck.CardTypes card)
+    public List<GenericComponents.Moveset> GetValidMovesForPlayer(int playerIndex, CardDeck.CardTypes card)
     {
-        List<Moveset> movesets = [];
+        List<GenericComponents.Moveset> movesets = [];
         var checkedStartWlog = false;
         for (var p = 0; p < 4; p++)
         {
@@ -89,17 +89,17 @@ public class GameBoard
             var moveList = validTiles
                 .GroupBy(x => x.Item1)
                 .Select(x =>
-                    new MoveOpts(currentPawnTile.Name, x.Key.Name, x.Select(y => (int)y.Item2)))
+                    new GenericComponents.MoveOpts(currentPawnTile.Name, x.Key.Name, x.Select(y => (int)y.Item2)))
                 .ToImmutableList();
 
             if (moveList.Count == 0) continue;
-            movesets.Add(new Moveset(currentPawnTile.Name, moveList));
+            movesets.Add(new GenericComponents.Moveset(currentPawnTile.Name, moveList));
         }
 
         return movesets;
     }
 
-    public bool TryExecuteSplitMove(Move firstMove, Move secondMove, int playerIndex)
+    public bool TryExecuteSplitMove(GenericComponents.Move firstMove, GenericComponents.Move secondMove, int playerIndex)
     {
         var firstMoveEffect = (MoveEffect)firstMove.Effect;
         var secondMoveEffect = (MoveEffect)secondMove.Effect;
@@ -161,7 +161,7 @@ public class GameBoard
         return true;
     }
 
-    public bool TryExecuteMovePawn(Move move, CardDeck.CardTypes drawnCard, int playerIndex)
+    public bool TryExecuteMovePawn(GenericComponents.Move move, CardDeck.CardTypes drawnCard, int playerIndex)
     {
         var isSwap = (MoveEffect)move.Effect == MoveEffect.Swap;
         
@@ -215,7 +215,7 @@ public class GameBoard
         }
     }
 
-    private BoardTile ValidateAndFindDestinationTile(BoardTile sourceTile, Move move, 
+    private BoardTile ValidateAndFindDestinationTile(BoardTile sourceTile, GenericComponents.Move move, 
         CardDeck.CardTypes drawnCard, int playerIndex)
     {
 

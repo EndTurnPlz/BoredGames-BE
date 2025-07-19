@@ -3,7 +3,7 @@ namespace BoredGames.Common.Game;
 public class GameAction
 {
     // --- Private Constructor ---
-    private GameAction(Func<Player?, IGameActionArgs?, IGameActionResponse?> action, Type argType, bool requiresPlayer)
+    private GameAction(Func<object, Player?, IGameActionResponse?> action, Type argType, bool requiresPlayer)
     {
         _action = action;
         _argType = argType;
@@ -12,55 +12,39 @@ public class GameAction
 
     // --- Public Static Factory Methods ---
     
-    // Factory for: Player-only, no return
-    public static GameAction Create(Action<Player> action)
-    {
-        return new GameAction(WrappedAction, typeof(void), true);
-        IGameActionResponse? WrappedAction(Player? p, IGameActionArgs? _) { action(p!); return null; }
-    }
-    
     // Factory for: No player, return value
-    public static GameAction Create(Func<IGameActionResponse?> action)
+    public static GameAction Create<TArgs>(Func<TArgs, IGameActionResponse?> action) where TArgs : class, IGameActionArgs
     {
         return new GameAction(WrappedAction, typeof(void), false);
-        IGameActionResponse? WrappedAction(Player? player, IGameActionArgs? gameActionArgs) => action();
-    }
-    
-    // Factory for: Player-only, return value
-    public static GameAction Create(Func<Player, IGameActionResponse?> action)
-    {
-        return new GameAction(WrappedAction, typeof(void), true);
-        IGameActionResponse? WrappedAction(Player? p, IGameActionArgs? _) => action(p!);
+        IGameActionResponse? WrappedAction(object args, Player? _) { action((TArgs)args); return null; }
     }
     
     // Factory for: Player and typed arguments
-    public static GameAction Create<TArgs>(Action<Player, TArgs> action) where TArgs : class, IGameActionArgs
+    public static GameAction Create<TArgs>(Action<TArgs, Player> action) where TArgs : class, IGameActionArgs
     {
         return new GameAction(WrappedAction, typeof(TArgs), true);
-        IGameActionResponse? WrappedAction(Player? p, IGameActionArgs? args) { action(p!, (TArgs)args!); return null; }
+        IGameActionResponse? WrappedAction(object args, Player? p) { action((TArgs)args, p!); return null; }
     }
 
     // Factory for: Player and typed arguments, return value
-    public static GameAction Create<TArgs>(Func<Player, TArgs, IGameActionResponse?> action) where TArgs : class, IGameActionArgs
+    public static GameAction Create<TArgs>(Func<TArgs, Player, IGameActionResponse?> action) where TArgs : class, IGameActionArgs
     {
         return new GameAction(WrappedAction, typeof(TArgs), true);
-        IGameActionResponse? WrappedAction(Player? p, IGameActionArgs? args) => action(p!, (TArgs)args!);
+        IGameActionResponse? WrappedAction(object args, Player? p) => action((TArgs)args, p!);
     }
 
-    private readonly Func<Player?, IGameActionArgs?, IGameActionResponse?> _action;
+    private readonly Func<object, Player?, IGameActionResponse?> _action;
     private readonly Type _argType;
     private readonly bool _requiresPlayer;
         
-    public IGameActionResponse? Execute(Player? player, IGameActionArgs? args)
+    public IGameActionResponse? Execute(IGameActionArgs args, Player? player)
     {
         // Corrected and improved validation logic
         if (_requiresPlayer && player is null) 
-            throw new ArgumentException("Player is required for this action.");
-        if (_argType == typeof(void) && args is not null) 
-            throw new ArgumentException("Args provided when no args were expected.");
-        if (_argType != typeof(void) && (args is null || !_argType.IsInstanceOfType(args)))
+            throw new ArgumentException("A Player is required for this action");
+        if (!_argType.IsInstanceOfType(args))
             throw new ArgumentException("Invalid argument type or null args provided when args were expected.");
         
-        return _action(player, args);
+        return _action(args, player);
     }
 }

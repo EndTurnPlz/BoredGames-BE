@@ -45,6 +45,8 @@ public class GameRoom
     {
         if (!_players.Any(p => p.ValidateId(playerId))) throw new PlayerNotFoundException();
         
+        ViewNum++;
+        
         var player = _players.First(p => p.ValidateId(playerId));
         player.IsConnected = true;
     }
@@ -59,13 +61,13 @@ public class GameRoom
         if (CurrentState is not State.GameInProgress) {
             RemovePlayer(player);
         } 
+        
+        ViewNum++;
     }
 
     private void RemovePlayer(Player player)
     {
         if (!_players.Contains(player)) throw new PlayerNotFoundException();
-        
-        ViewNum++;
         
         if (player == _host) {
             _players.Clear();
@@ -84,12 +86,12 @@ public class GameRoom
         ViewNum++;
     } 
 
-    public IGameActionResponse? ExecuteGameAction(string actionType, Guid? playerId = null, IGameActionArgs? args = null)
+    public IGameActionResponse? ExecuteGameAction(IGameActionArgs args, Guid? playerId = null)
     {
         if (CurrentState is not State.GameInProgress) throw new RoomNotStartedException();
         
         var player = playerId is not null ? _players.FirstOrDefault(p => p.ValidateId(playerId)) : null;
-        var result = Game!.ExecuteAction(actionType, player, args);
+        var result = Game!.ExecuteAction(args, player);
         if (Game!.HasEnded()) CurrentState = State.GameEnded;
         return result;
     }

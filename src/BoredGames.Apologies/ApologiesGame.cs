@@ -11,7 +11,7 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : GameBase(player
     private readonly CardDeck _cardDeck = new();
     private readonly GameBoard _gameBoard = new();
     private State GameState { get; set; } = State.P1Draw;
-    private MovePawnArgs? _lastCompletedMove;
+    private ActionArgs.MovePawnArgs? _lastCompletedMove;
     private readonly int[] _playerStatsPawnsKilled = Enumerable.Repeat(0, 4).ToArray();
     private readonly int[] _playerStatsMovesMade = Enumerable.Repeat(0, 4).ToArray();
     private readonly long _gameStartTimestamp = DateTime.Now.Ticks;
@@ -33,21 +33,21 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : GameBase(player
             _gameBoard.PawnTiles.Select(playerTiles => playerTiles.Select(pawnTiles => pawnTiles.Name)));
     }
 
-    public override IGameActionResponse? ExecuteAction(string actionType, Player? player = null, IGameActionArgs? args = null)
+    public override IGameActionResponse? ExecuteAction(IGameActionArgs args, Player? player = null)
     {
         
-        IReadOnlyDictionary<string, GameAction> actions = new Dictionary<string, GameAction>(StringComparer.OrdinalIgnoreCase)
+        IReadOnlyDictionary<Type, GameAction> actions = new Dictionary<Type, GameAction>
         {
-            ["Draw"] = GameAction.Create(DrawAction), 
-            ["Move"] = GameAction.Create<MovePawnArgs>(MoveAction),
-            ["Stats"] = GameAction.Create(GetStatsAction)
+            {typeof(ActionArgs.DrawCardArgs), GameAction.Create<ActionArgs.DrawCardArgs>(DrawCard_Action)}, 
+            {typeof(ActionArgs.MovePawnArgs), GameAction.Create<ActionArgs.MovePawnArgs>(MovePawn_Action)},
+            {typeof(ActionArgs.GetStatsArgs), GameAction.Create<ActionArgs.GetStatsArgs>(GetStats_Action)},
         };
         
-        var action = actions.GetValueOrDefault(actionType) ?? throw new InvalidActionException();
-        return action.Execute(player, args);
+        var action = actions.GetValueOrDefault(args.GetType()) ?? throw new InvalidActionException();
+        return action.Execute(args, player);
     }
 
-    private DrawCardResponse DrawAction(Player player)
+    private ActionResponses.DrawCardResponse DrawCard_Action(ActionArgs.DrawCardArgs _, Player player)
     {
         if (!IsCorrectPlayerDrawing(player)) throw new InvalidPlayerException();
 
@@ -57,10 +57,10 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : GameBase(player
         AdvanceGamePhase(validMoves.Count == 0);
         ViewNum += 1;
         
-        return new DrawCardResponse(ViewNum, (int)lastDrawn, validMoves);
+        return new ActionResponses.DrawCardResponse(ViewNum, (int)lastDrawn, validMoves);
     }
 
-    private void MoveAction(Player player, MovePawnArgs req)
+    private void MovePawn_Action(ActionArgs.MovePawnArgs req, Player player)
     {
         // make sure SplitMove is set only if the last drawn card is a 7
         if (!IsCorrectPlayerMoving(player)) throw new InvalidPlayerException();
@@ -98,9 +98,9 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : GameBase(player
         ViewNum += 1;
     }
 
-    private EndgameStatsResponse GetStatsAction()
+    private ActionResponses.EndgameStatsResponse GetStats_Action(ActionArgs.GetStatsArgs _)
     {
-        return new EndgameStatsResponse(_playerStatsMovesMade, _playerStatsPawnsKilled, 
+        return new ActionResponses.EndgameStatsResponse(_playerStatsMovesMade, _playerStatsPawnsKilled, 
             DateTime.Now.Ticks - _gameStartTimestamp);
     }
 

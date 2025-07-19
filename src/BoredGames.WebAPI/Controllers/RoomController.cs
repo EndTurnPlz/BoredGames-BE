@@ -87,8 +87,13 @@ public class RoomController : ControllerBase
             }
         } 
         catch (Exception ex) when (ex is OperationCanceledException or InvalidOperationException) {
-            var room = RoomManager.GetRoom(roomId);
-            room.RegisterPlayerDisconnected(playerId);
+            try {
+                var room = RoomManager.GetRoom(roomId);
+                room.RegisterPlayerDisconnected(playerId);
+            }
+            finally {
+                Response.Body.Close();
+            }
         } 
         catch (Exception ex) when (ex is RoomException) {
             Response.StatusCode = 404;

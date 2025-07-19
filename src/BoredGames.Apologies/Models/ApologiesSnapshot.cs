@@ -9,7 +9,7 @@ public record ApologiesSnapshot(
     int ViewNum,
     ApologiesGame.State GameState,
     CardDeck.CardTypes LastDrawnCard,
-    MovePawnArgs? LastCompletedMove,
+    ActionArgs.MovePawnArgs? LastCompletedMove,
     IEnumerable<string> TurnOrder,
     IEnumerable<bool> PlayerConnectionStatus,
     IEnumerable<IEnumerable<string>> Pieces) : IGameSnapshot;
