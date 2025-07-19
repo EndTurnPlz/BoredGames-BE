@@ -1,3 +1,4 @@
+using BoredGames.Common.Game;
 using JetBrains.Annotations;
 
 namespace BoredGames.Apologies.Models;
@@ -6,7 +7,7 @@ namespace BoredGames.Apologies.Models;
 public record DrawCardResponse(
     int CurrentView,
     int CardDrawn,
-    IEnumerable<Moveset> Movesets);
+    IEnumerable<Moveset> Movesets) : IGameResponseArgs;
     
 [UsedImplicitly]
 public record Moveset(

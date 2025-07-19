@@ -17,6 +17,8 @@ public interface IGameSnapshot
 
 public interface IGameActionArgs;
 
+public interface IGameResponseArgs;
+
 public enum GameTypes
 {
     Apologies
