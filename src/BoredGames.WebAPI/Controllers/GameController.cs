@@ -24,11 +24,11 @@ public class GameController : ControllerBase
     [Produces("application/json")]
     [HttpPost("action")]
     public ActionResult GameAction([FromRoute] Guid roomId, [FromHeader(Name = "X-Player-Key")] Guid playerId, 
-        [FromQuery] string action, [FromBody] IGameActionArgs? actionArgs)
+        [FromQuery] string actionType, [FromBody] IGameActionArgs? actionArgs)
     {
         try {
             var room = RoomManager.GetRoom(roomId);
-            return Ok(room.ExecuteGameAction(action, playerId, actionArgs));
+            return Ok(room.ExecuteGameAction(actionType, playerId, actionArgs));
         } catch (Exception ex) when (ex is RoomException or GameException) {
             return BadRequest(ex.Message);
         }

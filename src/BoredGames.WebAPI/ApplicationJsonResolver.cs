@@ -24,9 +24,9 @@ public class ApplicationJsonResolver : DefaultJsonTypeInfoResolver
         }
         
         // Handle IGameResponseArgs Polymorphism
-        if (jsonTypeInfo.Type == typeof(IGameResponseArgs))
+        if (jsonTypeInfo.Type == typeof(IGameActionResponse))
         {
-            ConfigurePolymorphism<IGameResponseArgs>(jsonTypeInfo);
+            ConfigurePolymorphism<IGameActionResponse>(jsonTypeInfo);
         }
 
         return jsonTypeInfo;

@@ -7,7 +7,7 @@ namespace BoredGames.Apologies.Models;
 public record DrawCardResponse(
     int CurrentView,
     int CardDrawn,
-    IEnumerable<Moveset> Movesets) : IGameResponseArgs;
+    IEnumerable<Moveset> Movesets) : IGameActionResponse;
     
 [UsedImplicitly]
 public record Moveset(

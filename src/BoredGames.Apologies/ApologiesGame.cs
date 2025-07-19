@@ -33,22 +33,23 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : GameBase(player
             _gameBoard.PawnTiles.Select(playerTiles => playerTiles.Select(pawnTiles => pawnTiles.Name)));
     }
 
-    public override object? ExecuteAction(string action, Player? player = null, IGameActionArgs? args = null)
+    public override IGameActionResponse? ExecuteAction(string actionType, Player? player = null, IGameActionArgs? args = null)
     {
         
-        IReadOnlyDictionary<string, GameAction> actions = new Dictionary<string, GameAction>
+        IReadOnlyDictionary<string, GameAction> actions = new Dictionary<string, GameAction>(StringComparer.OrdinalIgnoreCase)
         {
             ["Draw"] = GameAction.Create(DrawAction), 
             ["Move"] = GameAction.Create<MovePawnArgs>(MoveAction),
             ["Stats"] = GameAction.Create(GetStatsAction)
         };
         
-        return actions.GetValueOrDefault(action)?.Execute(player, args) ?? null;
+        var action = actions.GetValueOrDefault(actionType) ?? throw new InvalidActionException();
+        return action.Execute(player, args);
     }
 
-    private DrawCardResponse? DrawAction(Player player)
+    private DrawCardResponse DrawAction(Player player)
     {
-        if (!IsCorrectPlayerDrawing(player)) return null;
+        if (!IsCorrectPlayerDrawing(player)) throw new InvalidPlayerException();
 
         var lastDrawn = _cardDeck.DrawCard();
         var validMoves = _gameBoard.GetValidMovesForPlayer(Array.IndexOf(Players, player), lastDrawn);
@@ -59,10 +60,10 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : GameBase(player
         return new DrawCardResponse(ViewNum, (int)lastDrawn, validMoves);
     }
 
-    private object MoveAction(Player player, MovePawnArgs req)
+    private void MoveAction(Player player, MovePawnArgs req)
     {
         // make sure SplitMove is set only if the last drawn card is a 7
-        if (!IsCorrectPlayerMoving(player)) return false;
+        if (!IsCorrectPlayerMoving(player)) throw new InvalidPlayerException();
         
         var playerIndex = Array.IndexOf(Players, player);
         
@@ -71,11 +72,16 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : GameBase(player
             .ToArray();
         
         if (req.SplitMove is { } splitMove) {
-            if (_cardDeck.LastDrawn != CardDeck.CardTypes.Seven) return false;
-            if (!_gameBoard.TryExecuteSplitMove(req.Move, splitMove, playerIndex)) return false;
-        } else {
-            if (!_gameBoard.TryExecuteMovePawn(req.Move, _cardDeck.LastDrawn, playerIndex)) return false;
+            if (_cardDeck.LastDrawn != CardDeck.CardTypes.Seven ||
+                !_gameBoard.TryExecuteSplitMove(req.Move, splitMove, playerIndex)) 
+            {
+                throw new InvalidMoveException();
+            }
+
+        } else if (!_gameBoard.TryExecuteMovePawn(req.Move, _cardDeck.LastDrawn, playerIndex)) {
+            throw new InvalidMoveException();
         }
+        
         _gameBoard.ExecuteAnyAvailableSlides();
 
         var killedPawns = 0;
@@ -90,7 +96,6 @@ public sealed class ApologiesGame(IEnumerable<Player> players) : GameBase(player
         AdvanceGamePhase();
         _lastCompletedMove = req;
         ViewNum += 1;
-        return true;
     }
 
     private EndgameStatsResponse GetStatsAction()
