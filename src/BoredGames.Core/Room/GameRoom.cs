@@ -91,13 +91,15 @@ public class GameRoom
         
         var player = playerId is not null ? _players.FirstOrDefault(p => p.ValidateId(playerId)) : null;
         var result = _game!.ExecuteAction(args, player);
-        if (_game!.HasEnded()) 
+        if (_game!.HasEnded() && CurrentState is not State.GameEnded) 
         {
             LastIdleAt = DateTime.Now;
             CurrentState = State.GameEnded;
         }
-        
-        ViewNum++;
+        else {
+            ViewNum++;
+        }
+
         return result;
     }
     
