@@ -13,7 +13,7 @@ public class GameRoom
     public State CurrentState { get; private set; } = State.WaitingForPlayers;
 
     private readonly IGameConfig _gameConfig;
-    private GameBase? _game; // Make this private in a later refactor
+    private GameBase? _game;
     
     private static TimeSpan AbandonedTimeout => TimeSpan.FromMinutes(5);
 
@@ -87,7 +87,7 @@ public class GameRoom
 
     public IGameActionResponse? ExecuteGameAction(IGameActionArgs args, Guid? playerId = null)
     {
-        if (CurrentState is not State.GameInProgress) throw new RoomNotStartedException();
+        if (CurrentState is State.WaitingForPlayers) throw new RoomNotStartedException();
         
         var player = playerId is not null ? _players.FirstOrDefault(p => p.ValidateId(playerId)) : null;
         var result = _game!.ExecuteAction(args, player);

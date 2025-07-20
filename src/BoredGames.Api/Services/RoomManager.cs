@@ -16,10 +16,10 @@ public sealed class RoomManager : IDisposable
     public RoomManager(IEnumerable<IGameConfig> gameConfigs)
     {
         _configs = gameConfigs.ToFrozenDictionary(c => c.GameType, c => c);
-        Task.Run(StartRoomCleanup);
+        Task.Run(StartRoomCleanupTask);
     }
 
-    private async Task? StartRoomCleanup()
+    private async Task? StartRoomCleanupTask()
     {
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
         try {
