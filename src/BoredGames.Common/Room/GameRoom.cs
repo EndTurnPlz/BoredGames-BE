@@ -6,7 +6,7 @@ public class GameRoom
 {
     public int ViewNum { get; private set; }
     public Guid Id { get; } = Guid.NewGuid();
-    private DateTime CreatedAt { get; } = DateTime.Now;
+    private DateTime LastIdleAt { get; set; } = DateTime.Now;
     private readonly Player _host;
     private readonly List<Player> _players = [];
     public State CurrentState { get; private set; } = State.WaitingForPlayers;
@@ -26,7 +26,7 @@ public class GameRoom
     public bool IsDead()
     {
         if (CurrentState is State.GameInProgress) return false;
-        if (DateTime.Now - CreatedAt > AbandonedTimeout) return true;
+        if (DateTime.Now - LastIdleAt > AbandonedTimeout) return true;
         if (_players.Count == 0) return true;
 
         return false;
@@ -90,7 +90,12 @@ public class GameRoom
         
         var player = playerId is not null ? _players.FirstOrDefault(p => p.ValidateId(playerId)) : null;
         var result = Game!.ExecuteAction(args, player);
-        if (Game!.HasEnded()) CurrentState = State.GameEnded;
+        if (Game!.HasEnded()) 
+        {
+            CurrentState = State.GameEnded;
+            LastIdleAt = DateTime.Now;
+        }
+        
         ViewNum++;
         return result;
     }
