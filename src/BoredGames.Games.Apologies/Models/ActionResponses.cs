@@ -11,7 +11,7 @@ public static class ActionResponses
         IEnumerable<GenericComponents.Moveset> Movesets) : IGameActionResponse;
 
     [UsedImplicitly]
-    public record EndgameStatsResponse(
+    public record GetStatsResponse(
         IEnumerable<int> MovesMade,
         IEnumerable<int> PawnsKilled, 
         long GameTimeElapsed) : IGameActionResponse;

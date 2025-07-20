@@ -15,9 +15,9 @@ public sealed class ApologiesGame : GameBase
     private readonly GameBoard _gameBoard = new();
     private State GameState { get; set; } = State.P1Draw;
     private ActionArgs.MovePawnArgs? _lastCompletedMove;
-    private readonly int[] _playerStatsPawnsKilled = Enumerable.Repeat(0, 4).ToArray();
-    private readonly int[] _playerStatsMovesMade = Enumerable.Repeat(0, 4).ToArray();
-    private readonly long _gameStartTimestamp = DateTime.Now.Ticks;
+    
+    private readonly GameStats _stats = new();
+        
     public override bool HasEnded() => GameState == State.End;
     
     protected override FrozenDictionary<Type, GameAction> ActionMap { get; }
@@ -29,6 +29,30 @@ public sealed class ApologiesGame : GameBase
         P3Draw, P3Move,
         P4Draw, P4Move,
         End
+    }
+    
+    private class GameStats
+    {
+        private readonly long _gameStartTimestamp = DateTime.Now.Ticks;
+        private long? _gameEndTimestamp;
+        private int[] PlayerPawnsKilled { get; } = Enumerable.Repeat(0, 4).ToArray();
+        private int[] PlayerMovesMade { get; } = Enumerable.Repeat(0, 4).ToArray();
+        public void LogGameEnd()
+        {
+            _gameEndTimestamp = DateTime.Now.Ticks;
+        }
+
+        public void LogPlayerMove(int playerIndex, int pawnsKilled)
+        {
+            PlayerPawnsKilled[playerIndex] += pawnsKilled;
+            PlayerMovesMade[playerIndex]++;
+        }
+
+        public ActionResponses.GetStatsResponse GetStats()
+        {
+            return new ActionResponses.GetStatsResponse(PlayerMovesMade, PlayerPawnsKilled, 
+                _gameEndTimestamp ?? DateTime.Now.Ticks - _gameStartTimestamp);
+        }
     }
     
     public ApologiesGame(ImmutableList<Player> players) : base(players)
@@ -55,7 +79,7 @@ public sealed class ApologiesGame : GameBase
         var validMoves = _gameBoard.GetValidMovesForPlayer(Players.IndexOf(player), lastDrawn);
         
         AdvanceGamePhase(validMoves.Count == 0);
-        ViewNum += 1;
+        ViewNum++;
         
         return new ActionResponses.DrawCardResponse((int)lastDrawn, validMoves);
     }
@@ -90,18 +114,20 @@ public sealed class ApologiesGame : GameBase
             killedPawns += pawnTilesBeforeMove[i].Count(t => t is StartTile) 
                            - _gameBoard.PawnTiles[i].Count(t => t is StartTile);
         }
-        _playerStatsPawnsKilled[playerIndex] += killedPawns;
-        _playerStatsMovesMade[playerIndex]++;
+        _stats.LogPlayerMove(playerIndex, killedPawns);
         
         AdvanceGamePhase();
+        if (HasEnded()) {
+            _stats.LogGameEnd();
+        }
+        
         _lastCompletedMove = req;
-        ViewNum += 1;
+        ViewNum++;
     }
 
-    private ActionResponses.EndgameStatsResponse GetStats_Action(ActionArgs.GetStatsArgs _)
+    private ActionResponses.GetStatsResponse GetStats_Action(ActionArgs.GetStatsArgs _)
     {
-        return new ActionResponses.EndgameStatsResponse(_playerStatsMovesMade, _playerStatsPawnsKilled, 
-            DateTime.Now.Ticks - _gameStartTimestamp);
+        return _stats.GetStats();
     }
 
     private void AdvanceGamePhase(bool noMoves = false)
