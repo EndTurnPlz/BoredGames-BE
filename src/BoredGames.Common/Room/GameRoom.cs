@@ -12,7 +12,7 @@ public class GameRoom
     public State CurrentState { get; private set; } = State.WaitingForPlayers;
 
     private readonly GameConfig _gameConfig;
-    public GameBase? Game; // Make this private in a later refactor
+    private GameBase? _game; // Make this private in a later refactor
     
     private static TimeSpan AbandonedTimeout => TimeSpan.FromMinutes(5);
 
@@ -79,7 +79,7 @@ public class GameRoom
     {
         if (CurrentState is not State.WaitingForPlayers) throw new RoomCannotStartException();
         if (!_host.ValidateId(playerId)) throw new PlayerNotHostException();
-        Game = _gameConfig.CreateGameInstance(_players);
+        _game = _gameConfig.CreateGameInstance(_players);
         CurrentState = State.GameInProgress;
         ViewNum++;
     } 
@@ -89,8 +89,8 @@ public class GameRoom
         if (CurrentState is not State.GameInProgress) throw new RoomNotStartedException();
         
         var player = playerId is not null ? _players.FirstOrDefault(p => p.ValidateId(playerId)) : null;
-        var result = Game!.ExecuteAction(args, player);
-        if (Game!.HasEnded()) 
+        var result = _game!.ExecuteAction(args, player);
+        if (_game!.HasEnded()) 
         {
             CurrentState = State.GameEnded;
             LastIdleAt = DateTime.Now;
@@ -100,7 +100,7 @@ public class GameRoom
         return result;
     }
     
-    public IGameSnapshot? GetGameSnapshot() => Game?.GetSnapshot();
+    public IGameSnapshot? GetGameSnapshot() => _game?.GetSnapshot();
     
     public IEnumerable<string> GetPlayerNames() => _players.Select(p => p.Username);
     
