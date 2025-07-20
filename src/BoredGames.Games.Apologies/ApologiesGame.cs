@@ -111,8 +111,8 @@ public sealed class ApologiesGame : GameBase
         var killedPawns = 0;
         for (var i = 0; i < _gameBoard.PawnTiles.Length; i++) {
             if (i == playerIndex) continue;
-            killedPawns += pawnTilesBeforeMove[i].Count(t => t is StartTile) 
-                           - _gameBoard.PawnTiles[i].Count(t => t is StartTile);
+            killedPawns += _gameBoard.PawnTiles[i].Count(t => t is StartTile) 
+                           - pawnTilesBeforeMove[i].Count(t => t is StartTile);
         }
         _stats.LogPlayerMove(playerIndex, killedPawns);
         
