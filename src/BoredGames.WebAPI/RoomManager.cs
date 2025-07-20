@@ -77,6 +77,6 @@ public static class RoomManager
     // Temporary function for now ... will delete this when the full snapshot is passed via SSE.
     public static int GetRoomViewNum(Guid lobbyId)
     {
-        return GetRoom(lobbyId).ViewNum + (GetRoom(lobbyId).Game?.ViewNum ?? 0);
+        return GetRoom(lobbyId).ViewNum;
     }
 }

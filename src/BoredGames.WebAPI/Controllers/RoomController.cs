@@ -55,7 +55,7 @@ public class RoomController : ControllerBase
     {
         try {
             var room = RoomManager.GetRoom(roomId);
-            var snapshot = new RoomSnapshot(room.CurrentState, room.GetPlayerNames(), room.GetGameSnapshot());
+            var snapshot = new RoomSnapshot(room.ViewNum, room.CurrentState, room.GetPlayerNames(), room.GetGameSnapshot());
             return Ok(snapshot);
         } 
         catch (RoomException ex) {

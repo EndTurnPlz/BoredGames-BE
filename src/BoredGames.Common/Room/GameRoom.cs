@@ -37,18 +37,16 @@ public class GameRoom
         if (CurrentState is not State.WaitingForPlayers) throw new RoomNotFoundException();
         if (_players.Count >= _gameConfig.MaxPlayerCount) throw new RoomIsFullException();
 
-        ViewNum++;
         _players.Add(player);
+        ViewNum++;
     }
 
     public void RegisterPlayerConnected(Guid playerId)
     {
         if (!_players.Any(p => p.ValidateId(playerId))) throw new PlayerNotFoundException();
-        
-        ViewNum++;
-        
         var player = _players.First(p => p.ValidateId(playerId));
         player.IsConnected = true;
+        ViewNum++;
     }
 
     public void RegisterPlayerDisconnected(Guid playerId)
@@ -93,6 +91,7 @@ public class GameRoom
         var player = playerId is not null ? _players.FirstOrDefault(p => p.ValidateId(playerId)) : null;
         var result = Game!.ExecuteAction(args, player);
         if (Game!.HasEnded()) CurrentState = State.GameEnded;
+        ViewNum++;
         return result;
     }
     
