@@ -155,6 +155,8 @@ public sealed class ApologiesGame : GameBase
     
     private bool IsCorrectPlayerDrawing(Player player)
     {
+        if (GameState == State.End) return false;
+        
         var playerIndex = Players.IndexOf(player);
         return GameState switch 
         {
@@ -168,6 +170,8 @@ public sealed class ApologiesGame : GameBase
     
     private bool IsCorrectPlayerMoving(Player player)
     {
+        if (GameState == State.End) return false;
+        
         var playerIndex = Players.IndexOf(player);
         return GameState switch {
             State.P1Move => playerIndex == 0,
