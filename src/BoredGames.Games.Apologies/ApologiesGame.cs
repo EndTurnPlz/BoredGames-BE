@@ -33,13 +33,13 @@ public sealed class ApologiesGame : GameBase
     
     private class GameStats
     {
-        private readonly long _gameStartTimestamp = DateTime.Now.Ticks;
-        private long? _gameEndTimestamp;
+        private readonly DateTime _gameStartTimestamp = DateTime.Now;
+        private DateTime? _gameEndTimestamp;
         private int[] PlayerPawnsKilled { get; } = Enumerable.Repeat(0, 4).ToArray();
         private int[] PlayerMovesMade { get; } = Enumerable.Repeat(0, 4).ToArray();
         public void LogGameEnd()
         {
-            _gameEndTimestamp = DateTime.Now.Ticks;
+            _gameEndTimestamp = DateTime.Now;
         }
 
         public void LogPlayerMove(int playerIndex, int pawnsKilled)
@@ -50,8 +50,8 @@ public sealed class ApologiesGame : GameBase
 
         public ActionResponses.GetStatsResponse GetStats()
         {
-            return new ActionResponses.GetStatsResponse(PlayerMovesMade, PlayerPawnsKilled, 
-                _gameEndTimestamp ?? DateTime.Now.Ticks - _gameStartTimestamp);
+            var timeSpan = (_gameEndTimestamp ?? DateTime.Now) - _gameStartTimestamp;
+            return new ActionResponses.GetStatsResponse(PlayerMovesMade, PlayerPawnsKilled, (int)timeSpan.TotalSeconds);
         }
     }
     

@@ -14,5 +14,5 @@ public static class ActionResponses
     public record GetStatsResponse(
         IEnumerable<int> MovesMade,
         IEnumerable<int> PawnsKilled, 
-        long GameTimeElapsed) : IGameActionResponse;
+        int GameTimeElapsed) : IGameActionResponse;
 }
