@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 using BoredGames.Core;
 using BoredGames.Core.Game;
 using BoredGames.Core.Room;
@@ -66,7 +66,6 @@ public class RoomController(RoomManager roomManager) : ControllerBase
 
     [Produces("text/event-stream")]
     [HttpGet("{roomId:guid}/stream")]
-    [SuppressMessage("ReSharper.DPA", "DPA0011: High execution time of MVC action", MessageId = "time: 148567ms")]
     public async Task ConnectToRoom([FromRoute] Guid roomId, 
         [FromQuery] Guid playerId, 
         CancellationToken cancellationToken)
@@ -79,8 +78,8 @@ public class RoomController(RoomManager roomManager) : ControllerBase
             var room = roomManager.GetRoom(roomId);
             room.RegisterPlayerConnected(playerId);
             while (!cancellationToken.IsCancellationRequested) {
-                var viewNum = roomManager.GetRoomViewNum(roomId);
-                var sseData = $"data: {viewNum}\n\n";
+                var snapshot = roomManager.GetRoomSnapshot(room);
+                var sseData = $"{JsonSerializer.Serialize(snapshot)}\n\n";
                 
                 await Response.WriteAsync(sseData, cancellationToken);
                 await Response.Body.FlushAsync(cancellationToken);
