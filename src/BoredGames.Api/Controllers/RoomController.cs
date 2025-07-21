@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using BoredGames.Core;
 using BoredGames.Core.Game;
 using BoredGames.Core.Room;
@@ -14,7 +15,8 @@ public class RoomController(RoomManager roomManager) : ControllerBase
 {
     private static readonly JsonSerializerOptions SnapshotSerializerOpts = new()
     {
-        TypeInfoResolver = new GameTypeInfoResolver()
+        TypeInfoResolver = new GameTypeInfoResolver(),
+        Converters = { new JsonStringEnumConverter() }
     };
 
     [Produces("application/json")]
@@ -83,7 +85,7 @@ public class RoomController(RoomManager roomManager) : ControllerBase
             room.RegisterPlayerConnected(playerId);
             while (!cancellationToken.IsCancellationRequested) {
                 var snapshot = roomManager.GetRoomSnapshot(room);
-                var sseData = $"{JsonSerializer.Serialize(snapshot, SnapshotSerializerOpts)}\n\n";
+                var sseData = $"data: {JsonSerializer.Serialize(snapshot, SnapshotSerializerOpts)}\n\n";
                 
                 await Response.WriteAsync(sseData, cancellationToken);
                 await Response.Body.FlushAsync(cancellationToken);
