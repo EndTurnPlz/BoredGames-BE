@@ -12,6 +12,10 @@ namespace BoredGames.Controllers;
 [Route("room")]
 public class RoomController(RoomManager roomManager) : ControllerBase
 {
+    private static readonly JsonSerializerOptions SnapshotSerializerOpts = new()
+    {
+        TypeInfoResolver = new GameTypeInfoResolver()
+    };
 
     [Produces("application/json")]
     [HttpPost("create")]
@@ -79,7 +83,7 @@ public class RoomController(RoomManager roomManager) : ControllerBase
             room.RegisterPlayerConnected(playerId);
             while (!cancellationToken.IsCancellationRequested) {
                 var snapshot = roomManager.GetRoomSnapshot(room);
-                var sseData = $"{JsonSerializer.Serialize(snapshot)}\n\n";
+                var sseData = $"{JsonSerializer.Serialize(snapshot, SnapshotSerializerOpts)}\n\n";
                 
                 await Response.WriteAsync(sseData, cancellationToken);
                 await Response.Body.FlushAsync(cancellationToken);
