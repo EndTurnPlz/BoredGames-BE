@@ -21,5 +21,11 @@ public static class GenericComponents
         string From,
         string To, 
         IEnumerable<int> Effects);
+    
+    [UsedImplicitly]
+    public record GameStats(
+        IEnumerable<int> MovesMade,
+        IEnumerable<int> PawnsKilled, 
+        int GameTimeElapsed);
 }
 

@@ -10,6 +10,7 @@ public record ApologiesSnapshot(
     ApologiesGame.State GameState,
     CardDeck.CardTypes LastDrawnCard,
     ActionArgs.MovePawnArgs? LastCompletedMove,
+    GenericComponents.GameStats GameStats,
     IEnumerable<string> TurnOrder,
     IEnumerable<bool> PlayerConnectionStatus,
     IEnumerable<IEnumerable<string>> Pieces) : IGameSnapshot;

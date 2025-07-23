@@ -48,10 +48,10 @@ public sealed class ApologiesGame : GameBase
             PlayerMovesMade[playerIndex]++;
         }
 
-        public ActionResponses.GetStatsResponse GetStats()
+        public GenericComponents.GameStats GetStats()
         {
             var timeSpan = (_gameEndTimestamp ?? DateTime.Now) - _gameStartTimestamp;
-            return new ActionResponses.GetStatsResponse(PlayerMovesMade, PlayerPawnsKilled, (int)timeSpan.TotalSeconds);
+            return new GenericComponents.GameStats(PlayerMovesMade, PlayerPawnsKilled, (int)timeSpan.TotalSeconds);
         }
     }
     
@@ -60,15 +60,17 @@ public sealed class ApologiesGame : GameBase
         ActionMap = new List<GameAction> {
             GameAction.Create<ActionArgs.DrawCardArgs>(DrawCard_Action),
             GameAction.Create<ActionArgs.MovePawnArgs>(MovePawn_Action),
-            GameAction.Create<ActionArgs.GetStatsArgs>(GetStats_Action)
         }.ToFrozenDictionary(action => action.ArgType, action => action);
     }
     
     public override ApologiesSnapshot GetSnapshot()
     {
-        return new ApologiesSnapshot(ViewNum, GameState, _cardDeck.LastDrawn, _lastCompletedMove,
-            Players.Select(p => p.Username).ToArray(), Players.Select(p => p.IsConnected),
-            _gameBoard.PawnTiles.Select(playerTiles => playerTiles.Select(pawnTiles => pawnTiles.Name)));
+        var turnOrder = Players.Select(p => p.Username).ToArray();
+        var playerConnectionStatus = Players.Select(p => p.IsConnected);
+        var pieces = _gameBoard.PawnTiles.Select(playerTiles => playerTiles.Select(pawnTiles => pawnTiles.Name));
+        
+        return new ApologiesSnapshot(ViewNum, GameState, _cardDeck.LastDrawn, _lastCompletedMove, 
+            _stats.GetStats(), turnOrder, playerConnectionStatus, pieces);
     }
 
     private ActionResponses.DrawCardResponse DrawCard_Action(ActionArgs.DrawCardArgs _, Player player)
@@ -123,11 +125,6 @@ public sealed class ApologiesGame : GameBase
         
         _lastCompletedMove = req;
         ViewNum++;
-    }
-
-    private ActionResponses.GetStatsResponse GetStats_Action(ActionArgs.GetStatsArgs _)
-    {
-        return _stats.GetStats();
     }
 
     private void AdvanceGamePhase(bool noMoves = false)

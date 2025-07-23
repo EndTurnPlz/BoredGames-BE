@@ -9,10 +9,4 @@ public static class ActionResponses
     public record DrawCardResponse(
         int CardDrawn,
         IEnumerable<GenericComponents.Moveset> Movesets) : IGameActionResponse;
-
-    [UsedImplicitly]
-    public record GetStatsResponse(
-        IEnumerable<int> MovesMade,
-        IEnumerable<int> PawnsKilled, 
-        int GameTimeElapsed) : IGameActionResponse;
 }

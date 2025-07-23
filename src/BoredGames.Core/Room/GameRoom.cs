@@ -96,10 +96,8 @@ public class GameRoom
             LastIdleAt = DateTime.Now;
             CurrentState = State.GameEnded;
         }
-        else {
-            ViewNum++;
-        }
 
+        ViewNum++;
         return result;
     }
     
