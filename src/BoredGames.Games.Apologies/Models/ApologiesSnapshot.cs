@@ -6,7 +6,6 @@ namespace BoredGames.Games.Apologies.Models;
 
 [UsedImplicitly]
 public record ApologiesSnapshot(
-    int ViewNum,
     ApologiesGame.State GameState,
     CardDeck.CardTypes LastDrawnCard,
     ActionArgs.MovePawnArgs? LastCompletedMove,

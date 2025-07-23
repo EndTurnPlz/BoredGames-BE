@@ -69,7 +69,7 @@ public sealed class ApologiesGame : GameBase
         var playerConnectionStatus = Players.Select(p => p.IsConnected);
         var pieces = _gameBoard.PawnTiles.Select(playerTiles => playerTiles.Select(pawnTiles => pawnTiles.Name));
         
-        return new ApologiesSnapshot(ViewNum, GameState, _cardDeck.LastDrawn, _lastCompletedMove, 
+        return new ApologiesSnapshot(GameState, _cardDeck.LastDrawn, _lastCompletedMove, 
             _stats.GetStats(), turnOrder, playerConnectionStatus, pieces);
     }
 

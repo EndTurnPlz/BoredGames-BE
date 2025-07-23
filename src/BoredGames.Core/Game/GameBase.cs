@@ -21,10 +21,7 @@ public abstract class GameBase(ImmutableList<Player> players)
     }
 }
 
-public interface IGameSnapshot
-{
-    [UsedImplicitly] int ViewNum { get; }
-}
+public interface IGameSnapshot;
 
 public interface IGameActionArgs
 {
