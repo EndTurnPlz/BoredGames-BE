@@ -1,4 +1,3 @@
-using System.Collections.Frozen;
 using System.Collections.Immutable;
 using BoredGames.Core;
 using BoredGames.Core.Game;
@@ -8,7 +7,7 @@ using BoredGames.Games.Apologies.Models;
 
 namespace BoredGames.Games.Apologies;
 
-public sealed class ApologiesGame : GameBase
+public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(players)
 {
 
     private readonly CardDeck _cardDeck = new();
@@ -19,8 +18,6 @@ public sealed class ApologiesGame : GameBase
     private readonly GameStats _stats = new();
         
     public override bool HasEnded() => GameState == State.End;
-    
-    protected override FrozenDictionary<Type, GameAction> ActionMap { get; }
     
     public enum State
     {
@@ -54,15 +51,7 @@ public sealed class ApologiesGame : GameBase
             return new GenericComponents.GameStats(PlayerMovesMade, PlayerPawnsKilled, (int)timeSpan.TotalSeconds);
         }
     }
-    
-    public ApologiesGame(ImmutableList<Player> players) : base(players)
-    {
-        ActionMap = new List<GameAction> {
-            GameAction.Create<ActionArgs.DrawCardArgs>(DrawCard_Action),
-            GameAction.Create<ActionArgs.MovePawnArgs>(MovePawn_Action),
-        }.ToFrozenDictionary(action => action.ArgType, action => action);
-    }
-    
+
     public override ApologiesSnapshot GetSnapshot()
     {
         var turnOrder = Players.Select(p => p.Username).ToArray();
@@ -73,10 +62,11 @@ public sealed class ApologiesGame : GameBase
             _stats.GetStats(), turnOrder, playerConnectionStatus, pieces);
     }
 
-    private ActionResponses.DrawCardResponse DrawCard_Action(ActionArgs.DrawCardArgs _, Player player)
+    [GameAction]
+    private ActionResponses.DrawCardResponse DrawCardAction(ActionArgs.DrawCardArgs _, Player player)
     {
         if (!IsCorrectPlayerDrawing(player)) throw new InvalidPlayerException();
-
+        
         var lastDrawn = _cardDeck.DrawCard();
         var validMoves = _gameBoard.GetValidMovesForPlayer(Players.IndexOf(player), lastDrawn);
         
@@ -86,7 +76,8 @@ public sealed class ApologiesGame : GameBase
         return new ActionResponses.DrawCardResponse((int)lastDrawn, validMoves);
     }
 
-    private void MovePawn_Action(ActionArgs.MovePawnArgs req, Player player)
+    [GameAction]
+    private void MovePawnAction(ActionArgs.MovePawnArgs req, Player player)
     {
         // make sure SplitMove is set only if the last drawn card is a 7
         if (!IsCorrectPlayerMoving(player)) throw new InvalidPlayerException();

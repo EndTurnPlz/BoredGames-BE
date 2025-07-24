@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace BoredGames.Core.Game;
 
 public class GameAction
@@ -17,6 +19,7 @@ public class GameAction
     // --- Public Static Factory Methods ---
     
     // Factory for: No player, return value
+    [UsedImplicitly]
     public static GameAction Create<TArgs>(Func<TArgs, IGameActionResponse?> action) 
         where TArgs : class, IGameActionArgs
     {
@@ -29,6 +32,7 @@ public class GameAction
     }
     
     // Factory for: Player, no return value
+    [UsedImplicitly]
     public static GameAction Create<TArgs>(Action<TArgs, Player> action) 
         where TArgs : class, IGameActionArgs
     {
@@ -41,6 +45,7 @@ public class GameAction
     }
 
     // Factory for: Player and typed arguments, return value
+    [UsedImplicitly]
     public static GameAction Create<TArgs>(Func<TArgs, Player, IGameActionResponse?> action) 
         where TArgs : class, IGameActionArgs
     {
