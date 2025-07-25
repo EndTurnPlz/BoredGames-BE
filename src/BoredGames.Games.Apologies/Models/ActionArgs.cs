@@ -6,7 +6,7 @@ namespace BoredGames.Games.Apologies.Models;
 public static class ActionArgs
 {
     [UsedImplicitly]
-    public record MovePawnArgs(GenericComponents.Move Move, GenericComponents.Move? SplitMove) : IGameActionArgs
+    public record MovePawnArgs(GenericComponents.Move Move, GenericComponents.Move? SplitMove = null) : IGameActionArgs
     {
         public static string ActionName => "move";
     }
@@ -15,11 +15,5 @@ public static class ActionArgs
     public record DrawCardArgs : IGameActionArgs
     {
         public static string ActionName => "draw";
-    }
-
-    [UsedImplicitly]
-    public class GetStatsArgs : IGameActionArgs
-    {
-        public static string ActionName => "stats";
     }
 }

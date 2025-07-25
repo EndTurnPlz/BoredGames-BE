@@ -237,7 +237,7 @@ public class GameBoard
                 throw new InvalidDataException("Invalid move effect")
         };
 
-        return destTileCandidateList.FirstOrDefault(x => x.Name == move.To) ?? throw new Exception("Invalid move");
+        return destTileCandidateList.FirstOrDefault(x => x.Name == move.To) ?? throw new InvalidDataException("No valid move found");
     }
     
     // Check if any pawns occupy the destination tile. If so, handle them.
