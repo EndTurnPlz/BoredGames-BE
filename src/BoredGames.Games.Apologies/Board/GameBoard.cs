@@ -218,7 +218,6 @@ public class GameBoard
     private BoardTile ValidateAndFindDestinationTile(BoardTile sourceTile, GenericComponents.Move move, 
         CardDeck.CardTypes drawnCard, int playerIndex)
     {
-
         // Using the correct effect check if the end tile exists
         var destTileCandidateList = (MoveEffect)move.Effect switch
         {
@@ -235,7 +234,7 @@ public class GameBoard
             >= MoveEffect.Split1 and <= MoveEffect.Split6 =>
                 FindTilesForSplitMove(sourceTile, drawnCard, playerIndex).Select( x => x.Item1),
             _ => 
-                throw new Exception("Invalid move effect")
+                throw new InvalidDataException("Invalid move effect")
         };
 
         return destTileCandidateList.FirstOrDefault(x => x.Name == move.To) ?? throw new Exception("Invalid move");
