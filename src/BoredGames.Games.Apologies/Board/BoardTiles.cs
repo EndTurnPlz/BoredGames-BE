@@ -8,8 +8,8 @@ public abstract class BoardTile (string name)
 public abstract class WalkableTile (string name, BoardTile nextTile, BoardTile prevTile) 
     : BoardTile(name)
 {
-    public virtual BoardTile NextTile { protected get; set; } = nextTile;
-    public virtual BoardTile PrevTile { get; set; } = prevTile;
+    public BoardTile NextTile { protected get; set; } = nextTile;
+    public BoardTile PrevTile { get; set; } = prevTile;
     
     public virtual BoardTile EvaluateNextTile(int playerSide) => NextTile;
 }

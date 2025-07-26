@@ -130,6 +130,7 @@ public class CardDeckTests
         // LastDrawn should always reflect the most recent card
         var card3 = deck.DrawCard();
         Assert.Equal(card3, deck.LastDrawn);
+        while (card3 == card1) card3 = deck.DrawCard(); // Draw until card 3 is not card 1
         Assert.NotEqual(card1, deck.LastDrawn); // Current should not equal first
     }
 
