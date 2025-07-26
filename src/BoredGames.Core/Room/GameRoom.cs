@@ -103,7 +103,7 @@ public class GameRoom
     
     public IGameSnapshot? GetGameSnapshot() => _game?.GetSnapshot();
     
-    public IEnumerable<string> GetPlayerNames() => _players.Select(p => p.Username);
+    public IEnumerable<(string, bool)> GetPlayerInfo() => _players.Select(p => (p.Username, p.IsConnected));
     
     public enum State
     {

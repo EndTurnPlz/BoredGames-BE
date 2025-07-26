@@ -57,11 +57,10 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
     public override ApologiesSnapshot GetSnapshot()
     {
         var turnOrder = Players.Select(p => p.Username).ToArray();
-        var playerConnectionStatus = Players.Select(p => p.IsConnected);
         var pieces = _gameBoard.PawnTiles.Select(playerTiles => playerTiles.Select(pawnTiles => pawnTiles.Name));
         
         return new ApologiesSnapshot(GameState, _cardDeck.LastDrawn, _lastCompletedMove, 
-            _stats.GetStats(), turnOrder, playerConnectionStatus, pieces);
+            _stats.GetStats(), turnOrder, pieces);
     }
 
     [GameAction]
