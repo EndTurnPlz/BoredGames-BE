@@ -4,6 +4,7 @@ using BoredGames.Core.Game;
 using BoredGames.Games.Apologies.Board;
 using BoredGames.Games.Apologies.Deck;
 using BoredGames.Games.Apologies.Models;
+using JetBrains.Annotations;
 
 namespace BoredGames.Games.Apologies;
 
@@ -19,6 +20,7 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
         
     public override bool HasEnded() => GameState == State.End;
     
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]    
     public enum State
     {
         P1Draw, P1Move,
@@ -65,7 +67,9 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
     [GameAction]
     private ActionResponses.DrawCardResponse DrawCardAction(ActionArgs.DrawCardArgs _, Player player)
     {
-        if (!IsCorrectPlayerDrawing(player)) throw new InvalidPlayerException();
+        var playerIndex = Players.IndexOf(player);
+        var isCorrectPlayerDrawing = playerIndex * 2 == (int)GameState; 
+        if (!isCorrectPlayerDrawing) throw new InvalidPlayerException();
         
         var lastDrawn = _cardDeck.DrawCard();
         var validMoves = _gameBoard.GetValidMovesForPlayer(Players.IndexOf(player), lastDrawn);
@@ -79,15 +83,15 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
     [GameAction]
     private void MovePawnAction(ActionArgs.MovePawnArgs req, Player player)
     {
-        // make sure SplitMove is set only if the last drawn card is a 7
-        if (!IsCorrectPlayerMoving(player)) throw new InvalidPlayerException();
-        
         var playerIndex = Players.IndexOf(player);
+        var isCorrectPlayerMoving = playerIndex * 2 + 1 == (int)GameState; 
+        if (!isCorrectPlayerMoving) throw new InvalidPlayerException();
         
         var pawnTilesBeforeMove = _gameBoard.PawnTiles
             .Select(playerTiles => playerTiles.ToArray())
             .ToArray();
         
+        // make sure SplitMove is set only if the last drawn card is a 7
         if (req.SplitMove is { } splitMove) {
             if (_cardDeck.LastDrawn != CardDeck.CardTypes.Seven ||
                 !_gameBoard.TryExecuteSplitMove(req.Move, splitMove, playerIndex)) 
@@ -120,53 +124,29 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
 
     private void AdvanceGamePhase(bool noMoves = false)
     {
+        if (GameState is State.End) return;
+
+        var isDrawState = (int)GameState % 2 == 0;
+        var isMoveState = (int)GameState % 2 == 1;
+        
+        var nextGameState = (State)(((int)GameState + 1) % 8);
+
+        var drawAgain = _cardDeck.LastDrawn == CardDeck.CardTypes.Two;
+        if (drawAgain && isMoveState) {
+            nextGameState = (State)(((int)GameState - 1) % 8);
+        }
+
+        if (noMoves && isDrawState) {
+            nextGameState = (State)(((int)GameState + 2) % 8);
+        }
+
         var gameWon = Array.Exists(_gameBoard.PawnTiles, playerPawnTiles =>
             Array.TrueForAll(playerPawnTiles, pawnTile => pawnTile is HomeTile)
         );
-
-        var drawAgain = _cardDeck.LastDrawn == CardDeck.CardTypes.Two;
-
-        var nextGamePhase = gameWon ? State.End : GameState switch {
-            State.P1Draw => noMoves ? State.P2Draw : State.P1Move,
-            State.P1Move => drawAgain ? State.P1Draw : State.P2Draw,
-            State.P2Draw => noMoves ? State.P3Draw : State.P2Move,
-            State.P2Move => drawAgain ? State.P2Draw : State.P3Draw,
-            State.P3Draw => noMoves ? State.P4Draw : State.P3Move,
-            State.P3Move => drawAgain ? State.P3Draw : State.P4Draw,
-            State.P4Draw => noMoves ? State.P1Draw : State.P4Move,
-            State.P4Move => drawAgain ? State.P4Draw : State.P1Draw,
-            _ => GameState
-        };
+        if (gameWon) {
+            nextGameState = State.End;
+        }
         
-        GameState = nextGamePhase;
-    }
-    
-    private bool IsCorrectPlayerDrawing(Player player)
-    {
-        if (GameState == State.End) return false;
-        
-        var playerIndex = Players.IndexOf(player);
-        return GameState switch 
-        {
-            State.P1Draw => playerIndex == 0,
-            State.P2Draw => playerIndex == 1,
-            State.P3Draw => playerIndex == 2,
-            State.P4Draw => playerIndex == 3,
-            _ => false
-        };
-    }
-    
-    private bool IsCorrectPlayerMoving(Player player)
-    {
-        if (GameState == State.End) return false;
-        
-        var playerIndex = Players.IndexOf(player);
-        return GameState switch {
-            State.P1Move => playerIndex == 0,
-            State.P2Move => playerIndex == 1,
-            State.P3Move => playerIndex == 2,
-            State.P4Move => playerIndex == 3,
-            _ => false
-        };
+        GameState = nextGameState;
     }
 }
