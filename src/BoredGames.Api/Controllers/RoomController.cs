@@ -55,20 +55,6 @@ public class RoomController(RoomManager roomManager) : ControllerBase
         
         return Ok(new { playerId });
     }
-    
-    [Produces("application/json")]
-    [HttpGet("{roomId:guid}/snapshot")]
-    public ActionResult<RoomSnapshot> GetSnapshot([FromRoute] Guid roomId)
-    {
-        try {
-            var room = roomManager.GetRoom(roomId);
-            var snapshot = new RoomSnapshot(room.ViewNum, room.CurrentState, room.GetPlayerNames(), room.GetGameSnapshot());
-            return Ok(snapshot);
-        } 
-        catch (RoomException ex) {
-            return BadRequest(ex.Message);
-        }
-    }
 
     [Produces("text/event-stream")]
     [HttpGet("{roomId:guid}/stream")]
@@ -84,7 +70,8 @@ public class RoomController(RoomManager roomManager) : ControllerBase
             var room = roomManager.GetRoom(roomId);
             room.RegisterPlayerConnected(playerId);
             while (!cancellationToken.IsCancellationRequested) {
-                var snapshot = roomManager.GetRoomSnapshot(room);
+                var snapshot = new RoomSnapshot(room.ViewNum, room.CurrentState, 
+                    room.GetPlayerInfo(), room.GetGameSnapshot());
                 var sseData = $"data: {JsonSerializer.Serialize(snapshot, SnapshotSerializerOpts)}\n\n";
                 
                 await Response.WriteAsync(sseData, cancellationToken);

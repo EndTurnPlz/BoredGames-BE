@@ -4,7 +4,6 @@ using System.Diagnostics.Contracts;
 using BoredGames.Core;
 using BoredGames.Core.Game;
 using BoredGames.Core.Room;
-using BoredGames.Models;
 
 namespace BoredGames.Services;
 
@@ -70,11 +69,5 @@ public sealed class RoomManager : IDisposable
     public GameRoom GetRoom(Guid roomId)
     {
         return _rooms.GetValueOrDefault(roomId) ?? throw new RoomNotFoundException();
-    }
-
-    // Temporary function for now ... will delete this when the full snapshot is passed via SSE.
-    public RoomSnapshot GetRoomSnapshot(GameRoom room)
-    {
-        return new RoomSnapshot(room.ViewNum, room.CurrentState, room.GetPlayerNames(), room.GetGameSnapshot());
     }
 }

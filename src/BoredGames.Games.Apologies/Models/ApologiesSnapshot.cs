@@ -11,5 +11,4 @@ public record ApologiesSnapshot(
     ActionArgs.MovePawnArgs? LastCompletedMove,
     GenericComponents.GameStats GameStats,
     IEnumerable<string> TurnOrder,
-    IEnumerable<bool> PlayerConnectionStatus,
     IEnumerable<IEnumerable<string>> Pieces) : IGameSnapshot;
