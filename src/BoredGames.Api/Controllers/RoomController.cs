@@ -56,8 +56,8 @@ public class RoomController(RoomManager roomManager, PlayerConnectionManager pla
 
         try {
             var room = roomManager.GetRoom(roomId);
-            room.RegisterPlayerConnected(playerId);
             playerConnectionManager.AddConnection(playerId, Response);
+            room.RegisterPlayerConnected(playerId);
             
             while (!cancellationToken.IsCancellationRequested) {
                 const string sseHeartbeat = ": heartbeat\n\n";
