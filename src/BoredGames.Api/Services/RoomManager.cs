@@ -18,21 +18,20 @@ public sealed class RoomManager : IDisposable
     private readonly ILogger<RoomManager> _logger;
     
     public RoomManager(IEnumerable<IGameConfig> gameConfigs, PlayerConnectionManager playerConnectionManager,
-        ILogger<RoomManager> logger) {
+        ILogger<RoomManager> logger) 
+    {
         _configs = gameConfigs.ToFrozenDictionary(c => c.GameType, c => c);
         _playerConnectionManager = playerConnectionManager;
         _logger = logger;
     }
     
-    private async void OnRoomStateChanged(object? sender, EventArgs e)
+    private async void OnRoomChanged(object? sender, EventArgs e)
     {
-
         try {
-            if (sender is not GameRoom room) throw new ArgumentNullException(nameof(sender));
-            var playerIdsInRoom = room.Players.Select(p => p.Id); // TODO: fix torn read by adding func to get IDs
-            var snapshot = room.GetSnapshot();
+            if (sender is not GameRoom) throw new ArgumentNullException(nameof(sender));
+            if (e is not RoomChangedEventArgs args) throw new InvalidDataException("Invalid event args type");
         
-            await _playerConnectionManager.PushSnapshotToPlayersAsync(playerIdsInRoom, snapshot); 
+            await _playerConnectionManager.PushSnapshotToPlayersAsync(args.PlayerIds, args.Snapshot); 
         }
         catch (Exception ex) {
             _logger.LogError(ex, "Could not push room snapshot to players"); 
@@ -58,7 +57,7 @@ public sealed class RoomManager : IDisposable
         foreach (var id in deadRoomIds)
         {
             if (_rooms.TryRemove(id, out var room)) {
-                room.RoomStateChanged -= OnRoomStateChanged;
+                room.RoomChanged -= OnRoomChanged;
             }
         }
     }
@@ -80,7 +79,7 @@ public sealed class RoomManager : IDisposable
         var room = new GameRoom(host, config);
         if (!_rooms.TryAdd(room.Id, room)) throw new CreateRoomFailedException();
         
-        room.RoomStateChanged += OnRoomStateChanged;
+        room.RoomChanged += OnRoomChanged;
         return room.Id;
     }
     

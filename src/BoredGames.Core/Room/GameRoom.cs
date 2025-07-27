@@ -14,7 +14,6 @@ public class GameRoom
     // Players
     private readonly Player _host;
     private readonly List<Player> _players = [];
-    public IReadOnlyList<Player> Players => _players;
     private readonly List<Player> _pendingPlayers = [];
 
     // Game
@@ -25,11 +24,15 @@ public class GameRoom
     private readonly Lock _lock = new();
     
     // Event Emitter
-    public event EventHandler? RoomStateChanged;
+    public event EventHandler? RoomChanged;
     
-    private void OnRoomStateChanged()
+    // Event emitter (not thread safe)
+    private void EmitRoomChangedEvent()
     {
-        RoomStateChanged?.Invoke(this, EventArgs.Empty);
+        ViewNum++;
+        var snapshot = GetSnapshot();
+        var playerIds = _players.Select(p => p.Id);
+        RoomChanged?.Invoke(this, new RoomChangedEventArgs(playerIds, snapshot));
     }
     
     public GameRoom(Player host, IGameConfig gameConfig)
@@ -42,7 +45,7 @@ public class GameRoom
     public bool IsDead(TimeSpan abandonedTimeout)
     {
         lock (_lock) {
-            if (_players.Count == 0) return true;
+            if (_players.Count == 0 && !_pendingPlayers.Contains(_host)) return true;
             return DateTime.Now - LastIdleAt > abandonedTimeout;
         }
     }
@@ -81,7 +84,7 @@ public class GameRoom
                          ?? throw new PlayerNotFoundException();
             player.IsConnected = true;
             ViewNum++;
-            OnRoomStateChanged();
+            EmitRoomChangedEvent();
         }
     }
 
@@ -101,8 +104,7 @@ public class GameRoom
                 }
             }
         
-            ViewNum++;
-            OnRoomStateChanged();
+            EmitRoomChangedEvent();
         }
     }
 
@@ -114,8 +116,7 @@ public class GameRoom
             _game = _gameConfig.CreateGameInstance(_players.ToImmutableList());
             CurrentState = State.GameInProgress;
             LastIdleAt = DateTime.Now;
-            ViewNum++;
-            OnRoomStateChanged();
+            EmitRoomChangedEvent();
         }
     } 
 
@@ -128,13 +129,12 @@ public class GameRoom
             var result = _game!.ExecuteAction(args, player);
             if (_game!.HasEnded()) CurrentState = State.GameEnded;
             LastIdleAt = DateTime.Now;
-            ViewNum++;
-            OnRoomStateChanged();
+            EmitRoomChangedEvent();
             return result;
         }
     }
 
-    public RoomSnapshot GetSnapshot()
+    private RoomSnapshot GetSnapshot()
     {
         lock (_lock) {
             var playerNames = _players.Select(p => p.Username);
