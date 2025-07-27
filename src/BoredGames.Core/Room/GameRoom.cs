@@ -137,8 +137,9 @@ public class GameRoom
     public RoomSnapshot GetSnapshot()
     {
         lock (_lock) {
-            var playerInfo = _players.Select(p => (p.Username, p.IsConnected));
-            return new RoomSnapshot(ViewNum, CurrentState, playerInfo, _game?.GetSnapshot());
+            var playerNames = _players.Select(p => p.Username);
+            var playerConnStatus = _players.Select(p => p.IsConnected);
+            return new RoomSnapshot(ViewNum, CurrentState, playerNames, playerConnStatus, _game?.GetSnapshot());
         }
     }
 

@@ -7,5 +7,6 @@ namespace BoredGames.Core.Room;
 public record RoomSnapshot(
     int ViewNum, 
     GameRoom.State State, 
-    IEnumerable<(string, bool)> Players, 
+    IEnumerable<string> PlayerNames,
+    IEnumerable<bool> PlayerConnStatus,
     IGameSnapshot? GameSnapshot);
