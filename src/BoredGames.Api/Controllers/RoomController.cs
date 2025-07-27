@@ -1,9 +1,6 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using BoredGames.Core;
 using BoredGames.Core.Game;
 using BoredGames.Core.Room;
-using BoredGames.Models;
 using BoredGames.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,28 +8,21 @@ namespace BoredGames.Controllers;
 
 [ApiController]
 [Route("room")]
-public class RoomController(RoomManager roomManager) : ControllerBase
+public class RoomController(RoomManager roomManager, PlayerConnectionManager playerConnectionManager) : ControllerBase
 {
-    private static readonly JsonSerializerOptions SnapshotSerializerOpts = new()
-    {
-        TypeInfoResolver = new GameTypeInfoResolver(),
-        Converters = { new JsonStringEnumConverter() }
-    };
 
     [Produces("application/json")]
     [HttpPost("create")]
     public ActionResult CreateRoom([FromBody] string playerName, [FromQuery] string gameType)
     {
-        Player player = new(out var playerId)
-        {
-            Username = playerName
-        };
+        var player = new Player(playerName);
         
         var ok = Enum.TryParse<GameTypes>(gameType, out var resolvedType);
         if (!ok) {
             return NotFound("Invalid game type");
         }
         
+        var playerId = player.Id;
         var roomId = roomManager.CreateRoom(resolvedType, player);
         return Ok(new { playerId, roomId } );
     }
@@ -41,10 +31,7 @@ public class RoomController(RoomManager roomManager) : ControllerBase
     [HttpPost("{roomId:guid}/join")]
     public ActionResult JoinRoom([FromRoute] Guid roomId, [FromBody] string playerName)
     {
-        Player player = new(out var playerId)
-        {
-            Username = playerName
-        };
+        var player = new Player(playerName);
         
         try {
             roomManager.JoinRoom(roomId, player);
@@ -53,6 +40,7 @@ public class RoomController(RoomManager roomManager) : ControllerBase
             return BadRequest(ex.Message);
         }
         
+        var playerId = player.Id;
         return Ok(new { playerId });
     }
 
@@ -69,27 +57,33 @@ public class RoomController(RoomManager roomManager) : ControllerBase
         try {
             var room = roomManager.GetRoom(roomId);
             room.RegisterPlayerConnected(playerId);
+            playerConnectionManager.AddConnection(playerId, Response);
+            
             while (!cancellationToken.IsCancellationRequested) {
-                var snapshot = new RoomSnapshot(room.ViewNum, room.CurrentState, 
-                    room.GetPlayerInfo(), room.GetGameSnapshot());
-                var sseData = $"data: {JsonSerializer.Serialize(snapshot, SnapshotSerializerOpts)}\n\n";
-                
-                await Response.WriteAsync(sseData, cancellationToken);
+                const string sseHeartbeat = ": heartbeat\n\n";
+                await Response.WriteAsync(sseHeartbeat, cancellationToken);
                 await Response.Body.FlushAsync(cancellationToken);
-                await Task.Delay(250, cancellationToken);
+                
+                await Task.Delay(TimeSpan.FromSeconds(15), cancellationToken);
             }
-        } 
-        catch (Exception ex) when (ex is OperationCanceledException or InvalidOperationException) {
+        }
+        catch (Exception ex) when (ex is RoomException) {
+            Response.Body.Close();
+            Response.StatusCode = 404;
+        }
+        finally {
+            playerConnectionManager.RemoveConnection(playerId);
+
             try {
                 var room = roomManager.GetRoom(roomId);
                 room.RegisterPlayerDisconnected(playerId);
             }
+            catch (RoomException) {
+                // Ignore
+            }
             finally {
                 Response.Body.Close();
             }
-        } 
-        catch (Exception ex) when (ex is RoomException) {
-            Response.StatusCode = 404;
         }
     }
 }

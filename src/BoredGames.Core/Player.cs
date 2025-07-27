@@ -1,22 +1,18 @@
 namespace BoredGames.Core;
 
-public class Player
+public class Player(string name)
 {
-    private readonly Guid _id = Guid.NewGuid();
-    public string Username { get; init; } = "";
+    public readonly Guid Id = Guid.NewGuid();
+    public string Username { get; } = name;
     public bool IsConnected { get; set; }
-
-    public Player(out Guid playerId)
-    {
-        playerId = _id;
-    }
-
+    public DateTime CreatedAt { get; } = DateTime.Now;
+    
     public override bool Equals(object? obj)
     {
         if (obj is null) return false;
         if (ReferenceEquals(this, obj)) return true;
         if (obj.GetType() != GetType()) return false;
-        return ((Player)obj)._id == _id;
+        return ((Player)obj).Id == Id;
     }
 
     public static bool operator ==(Player? a, Player? b)
@@ -35,11 +31,6 @@ public class Player
 
     public override int GetHashCode()
     {
-        return _id.GetHashCode();
-    }
-
-    internal bool ValidateId(Guid? id)
-    {
-        return _id == id;
+        return Id.GetHashCode();
     }
 }

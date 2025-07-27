@@ -1,8 +1,7 @@
 using BoredGames.Core.Game;
-using BoredGames.Core.Room;
 using JetBrains.Annotations;
 
-namespace BoredGames.Models;
+namespace BoredGames.Core.Room;
 
 [UsedImplicitly]
 public record RoomSnapshot(

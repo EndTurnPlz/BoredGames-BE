@@ -113,9 +113,7 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
         _stats.LogPlayerMove(playerIndex, killedPawns);
         
         AdvanceGamePhase();
-        if (HasEnded()) {
-            _stats.LogGameEnd();
-        }
+        if (HasEnded()) _stats.LogGameEnd();
         
         _lastCompletedMove = req;
         ViewNum++;

@@ -13,24 +13,20 @@ namespace BoredGames.UnitTests.Apologies;
 public class ApologiesGameTest
 {
     private readonly ImmutableList<Player> _players = ImmutableList.Create(
-        new Player(out _)
+        new Player("Player1")
         {
-            Username = "Player1", 
             IsConnected = true
         },
-        new Player(out _)
+        new Player("Player2")
         {
-            Username = "Player2",
             IsConnected = true
         },
-        new Player(out _)
+        new Player("Player3")
         {
-            Username = "Player3",
             IsConnected = true
         },
-        new Player(out _)
+        new Player("Player4")
         {
-            Username = "Player4",
             IsConnected = true
         });
 
