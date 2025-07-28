@@ -16,20 +16,19 @@ builder.Services
     .AddControllers()
     .AddJsonOptions(ConfigureJsonOptions);
 
-// Register IGameConfigs here
-_ = typeof(BoredGames.Games.Apologies.ApologiesGameConfig);
-
 // Add application services here
 builder.Services
     .AddGameConfigs()
-    .AddSingleton<RoomManager>();
+    .AddSingleton<RoomManager>()
+    .AddHostedService<RoomCleanupService>()
+    .AddSingleton<PlayerConnectionManager>();
 
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
     scope.ServiceProvider.GetRequiredService<RoomManager>();
-    Console.WriteLine("RoomManager and all game configs have been initialized.");
+    Console.WriteLine("RoomManager initialized.");
 }
 
 // Configure the HTTP request pipeline.

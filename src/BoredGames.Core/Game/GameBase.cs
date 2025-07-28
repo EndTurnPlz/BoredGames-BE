@@ -1,13 +1,20 @@
 using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Reflection;
-using JetBrains.Annotations;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace BoredGames.Core.Game;
 
 public abstract class GameBase
 {
-    private FrozenDictionary<Type, GameAction> ActionMap { get; }
+    private static readonly JsonSerializerOptions Options = new()
+    {
+        PropertyNameCaseInsensitive = true, 
+        Converters = { new JsonStringEnumConverter() }
+    };
+    
+    private FrozenDictionary<string, GameAction> ActionMap { get; }
     protected readonly ImmutableList<Player> Players;
     protected int ViewNum { get; set; }
 
@@ -20,106 +27,64 @@ public abstract class GameBase
     public abstract IGameSnapshot GetSnapshot();
     public abstract bool HasEnded();
 
-    public IGameActionResponse? ExecuteAction(IGameActionArgs args, Player? player = null)
+    public IGameActionResponse? ExecuteAction(string actionName, Player player, JsonElement? rawArgs = null)
     {
-        var action = ActionMap.GetValueOrDefault(args.GetType()) ?? throw new InvalidActionException();
-        return action.Execute(args, player);
+        var action = ActionMap.GetValueOrDefault(actionName) ?? throw new InvalidActionException();
+
+        if (action.ArgsType is null) {
+            if (rawArgs is not null) throw new BadActionArgsGameException();
+            return action.Execute(this, player);
+        }
+        
+        if (rawArgs is not {} args) throw new BadActionArgsGameException();
+
+        var resolvedArgs = args.Deserialize(action.ArgsType, Options) as IGameActionArgs 
+                           ?? throw new BadActionArgsGameException();
+        
+        return action.Execute(this, player, resolvedArgs);
     }
 
-    private FrozenDictionary<Type, GameAction> DiscoverActions()
+    private FrozenDictionary<string, GameAction> DiscoverActions()
     {
-        var actionMap = new Dictionary<Type, GameAction>();
-        var gameType = GetType(); // The concrete type, e.g., ApologiesGame
+        var actionMap = new Dictionary<string, GameAction>();
+        var gameType = GetType(); 
 
         var actionMethods = gameType
             .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
             .Where(m => m.GetCustomAttribute<GameActionAttribute>() != null);
 
-        // Pre-filter the factory methods for easier lookup
-        var createMethods = typeof(GameAction).GetMethods(BindingFlags.Static | BindingFlags.Public)
-            .Where(m => m is { Name: "Create", IsGenericMethod: true })
-            .ToList();
-
         foreach (var method in actionMethods)
         {
-            var parameters = method.GetParameters();
-            var argsParam = parameters.Single(p => typeof(IGameActionArgs).IsAssignableFrom(p.ParameterType));
-            var argsType = argsParam.ParameterType;
-            
-            if (argsParam == null)
-            {
-                throw new InvalidOperationException($"Method '{method.Name}' has [GameAction] but no parameter " +
-                                                    $"that implements IGameActionArgs.");
-            }
-
-            // Enforce that the IGameActionArgs parameter is the first one.
-            if (parameters.Length == 0 || parameters[0].ParameterType != argsType)
-            {
-                throw new InvalidOperationException(
-                    $"Method '{method.Name}' is a [GameAction], but its first parameter is not the one" +
-                    $" implementing IGameActionArgs. Convention requires the args parameter to be first."
-                );
-            }
-
-            var hasPlayerParam = parameters.Any(p => p.ParameterType == typeof(Player));
-            var returnsValue = method.ReturnType != typeof(void);
-
-            var createMethodInfo = hasPlayerParam switch
-            {
-                true when returnsValue => createMethods.Single(m =>
-                    m.GetParameters()[0].ParameterType.Name.StartsWith("Func") &&
-                    m.GetParameters()[0].ParameterType.GetGenericArguments().Length == 3),
-                false when returnsValue => createMethods.Single(m =>
-                    m.GetParameters()[0].ParameterType.Name.StartsWith("Func") &&
-                    m.GetParameters()[0].ParameterType.GetGenericArguments().Length == 2),
-                true when !returnsValue => createMethods.Single(m =>
-                    m.GetParameters()[0].ParameterType.Name.StartsWith("Action") &&
-                    m.GetParameters()[0].ParameterType.GetGenericArguments().Length == 2),
-                _ => throw new NotSupportedException(
-                    $"The signature of action method '{method.Name}' is not supported.")
-            };
-
-            // Create a closed generic method (e.g., GameAction.Create<ApologiesGame, PlaceTileArgs>)
-            var genericCreateMethod = createMethodInfo.MakeGenericMethod(argsType);
-
-            // Dynamically build the correct delegate type to match the method's signature
-            var delegateType = GetDelegateTypeForMethod(method);
-            var actionDelegate = Delegate.CreateDelegate(delegateType, this, method);
-
-            // Invoke the static Create method to get our GameAction wrapper
-            var gameAction = (GameAction)genericCreateMethod.Invoke(null, [actionDelegate])!;
-
-            actionMap.Add(argsType, gameAction);
+            // Throw new NotSupportedException("This method signature is not supported.");
+            var actionName = method.GetCustomAttribute<GameActionAttribute>()!.Name;
+            actionMap.Add(actionName, GameAction.Create(method, this));
         }
 
         return actionMap.ToFrozenDictionary();
     }
 
-    // Helper method to build the correct Action<> or Func<> type
-    private static Type GetDelegateTypeForMethod(MethodInfo method)
-    {
-        var parameterTypes = method.GetParameters().Select(p => p.ParameterType).ToList();
-
-        if (method.ReturnType == typeof(void))
-        {
-            // e.g., Action<Player, PlaceTileArgs>
-            return Type.GetType($"System.Action`{parameterTypes.Count}")!.MakeGenericType(parameterTypes.ToArray());
-        }
-        else
-        {
-            // e.g., Func<Player, DrawCardArgs, DrawCardResponse>
-            parameterTypes.Add(method.ReturnType);
-            return Type.GetType($"System.Func`{parameterTypes.Count}")!.MakeGenericType(parameterTypes.ToArray());
-        }
-    }
+    // // Helper method to build the correct Action<> or Func<> type
+    // private static Type GetDelegateTypeForMethod(MethodInfo method)
+    // {
+    //     var parameterTypes = method.GetParameters().Select(p => p.ParameterType).ToList();
+    //
+    //     if (method.ReturnType == typeof(void))
+    //     {
+    //         // e.g., Action<Player, PlaceTileArgs>
+    //         return Type.GetType($"System.Action`{parameterTypes.Count}")!.MakeGenericType(parameterTypes.ToArray());
+    //     }
+    //     else
+    //     {
+    //         // e.g., Func<Player, DrawCardArgs, DrawCardResponse>
+    //         parameterTypes.Add(method.ReturnType);
+    //         return Type.GetType($"System.Func`{parameterTypes.Count}")!.MakeGenericType(parameterTypes.ToArray());
+    //     }
+    // }
 }
 
 public interface IGameSnapshot;
 
-public interface IGameActionArgs
-{
-    [UsedImplicitly] static abstract string ActionName { get; }
-}
+public interface IGameActionArgs;
 
 public interface IGameActionResponse;
 

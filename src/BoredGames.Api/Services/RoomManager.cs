@@ -4,77 +4,93 @@ using System.Diagnostics.Contracts;
 using BoredGames.Core;
 using BoredGames.Core.Game;
 using BoredGames.Core.Room;
-using BoredGames.Models;
 
 namespace BoredGames.Services;
 
 public sealed class RoomManager : IDisposable
 {
     private readonly ConcurrentDictionary<Guid, GameRoom> _rooms = new();
-    private readonly CancellationTokenSource _tickerCts = new();
     private readonly FrozenDictionary<GameTypes, IGameConfig> _configs;
+    private readonly CancellationTokenSource _tickerCts = new();
     
-    public RoomManager(IEnumerable<IGameConfig> gameConfigs)
+    private readonly TimeSpan _abandonedRoomTimeout = TimeSpan.FromMinutes(5);
+    private readonly PlayerConnectionManager _playerConnectionManager;
+    private readonly ILogger<RoomManager> _logger;
+    
+    public RoomManager(IEnumerable<IGameConfig> gameConfigs, PlayerConnectionManager playerConnectionManager,
+        ILogger<RoomManager> logger) 
     {
         _configs = gameConfigs.ToFrozenDictionary(c => c.GameType, c => c);
-        Task.Run(StartRoomCleanupTask);
+        _playerConnectionManager = playerConnectionManager;
+        _logger = logger;
     }
-
-    private async Task? StartRoomCleanupTask()
+    
+    private async void OnRoomChanged(object? sender, EventArgs e)
     {
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
         try {
-            while (await timer.WaitForNextTickAsync(_tickerCts.Token)) {
-                try {
-                    CleanupDeadRooms();
-                }
-                catch (Exception ex) {
-                    // Add some actual logging here at some point
-                    Console.WriteLine($"An error occurred during the background tick: {ex.Message}");
-                }
-            }
+            if (sender is not GameRoom) throw new ArgumentNullException(nameof(sender));
+            if (e is not RoomChangedEventArgs args) throw new InvalidDataException("Invalid event args type");
+        
+            await _playerConnectionManager.PushSnapshotToPlayersAsync(args.PlayerIds, args.Snapshot); 
         }
-        catch (OperationCanceledException) { } // This is expected on a graceful shutdown.
-    }
-
-    private void CleanupDeadRooms()
-    {
-        var deadRoomIds = _rooms.Where(pair => pair.Value.IsDead()).Select(pair => pair.Key);
-
-        foreach (var id in deadRoomIds)
-        {
-            _rooms.TryRemove(id, out _);
+        catch (Exception ex) {
+            _logger.LogError(ex, "Could not push room snapshot to players"); 
         }
     }
-
+    
     public void Dispose()
     {
         _tickerCts.Cancel();
         _tickerCts.Dispose();
     }
 
+    public void CleanupStaleResources()
+    {
+        CleanupDeadRooms(_abandonedRoomTimeout);
+        CleanupExpiredPlayers();
+    }
+
+    private void CleanupDeadRooms(TimeSpan abandonedRoomTimeout)
+    {
+        var deadRoomIds = _rooms.Where(pair => pair.Value.IsDead(abandonedRoomTimeout)).Select(pair => pair.Key);
+
+        foreach (var id in deadRoomIds)
+        {
+            if (_rooms.TryRemove(id, out var room)) {
+                room.RoomChanged -= OnRoomChanged;
+            }
+        }
+    }
+    
+    private void CleanupExpiredPlayers()
+    {
+        foreach (var (_, room) in _rooms) 
+        {
+            if (room.MayHaveExpiredPlayers()) {
+                room.RemoveExpiredPlayers();
+            }
+        }
+    }
+
     public Guid CreateRoom(GameTypes gameType, Player host)
     {
-        var lobby = new GameRoom(host, _configs[gameType]);
-        var ok = _rooms.TryAdd(lobby.Id, lobby);
-        if (!ok) throw new CreateRoomFailedException();
-        return lobby.Id;
+        if (!_configs.TryGetValue(gameType, out var config)) throw new CreateRoomFailedException();
+        
+        var room = new GameRoom(host, config);
+        if (!_rooms.TryAdd(room.Id, room)) throw new CreateRoomFailedException();
+        
+        room.RoomChanged += OnRoomChanged;
+        return room.Id;
     }
     
     public void JoinRoom(Guid roomId, Player player)
     {
-        GetRoom(roomId).AddPlayer(player);
+        GetRoom(roomId).AddPendingPlayer(player);
     }
     
     [Pure]
     public GameRoom GetRoom(Guid roomId)
     {
         return _rooms.GetValueOrDefault(roomId) ?? throw new RoomNotFoundException();
-    }
-
-    // Temporary function for now ... will delete this when the full snapshot is passed via SSE.
-    public RoomSnapshot GetRoomSnapshot(GameRoom room)
-    {
-        return new RoomSnapshot(room.ViewNum, room.CurrentState, room.GetPlayerNames(), room.GetGameSnapshot());
     }
 }

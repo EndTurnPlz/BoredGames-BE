@@ -3,6 +3,7 @@ using BoredGames.Core.Game;
 using BoredGames.Games.Apologies.Models;
 using System.Collections.Immutable;
 using System.Reflection;
+using System.Text.Json;
 using BoredGames.Core;
 using BoredGames.Games.Apologies.Board;
 using BoredGames.Games.Apologies.Deck;
@@ -13,24 +14,20 @@ namespace BoredGames.UnitTests.Apologies;
 public class ApologiesGameTest
 {
     private readonly ImmutableList<Player> _players = ImmutableList.Create(
-        new Player(out _)
+        new Player("Player1")
         {
-            Username = "Player1", 
             IsConnected = true
         },
-        new Player(out _)
+        new Player("Player2")
         {
-            Username = "Player2",
             IsConnected = true
         },
-        new Player(out _)
+        new Player("Player3")
         {
-            Username = "Player3",
             IsConnected = true
         },
-        new Player(out _)
+        new Player("Player4")
         {
-            Username = "Player4",
             IsConnected = true
         });
 
@@ -55,7 +52,7 @@ public class ApologiesGameTest
 
         // Act & Assert
         Assert.Throws<InvalidPlayerException>(() => 
-            game.ExecuteAction(new ActionArgs.DrawCardArgs(), _players[1]));
+            game.ExecuteAction("draw", _players[1]));
     }
 
     [Fact]
@@ -67,7 +64,7 @@ public class ApologiesGameTest
         
         // Act & Assert
         Assert.Throws<InvalidPlayerException>(() =>
-            game.ExecuteAction(new ActionArgs.MovePawnArgs(move), _players[1]));
+            game.ExecuteAction("move", _players[1],ToJsonElement(new ActionArgs.MovePawnArgs(move))));
     }
 
     [Fact]
@@ -99,7 +96,6 @@ public class ApologiesGameTest
         }
     }
 
-
     [Fact]
     public void GetSnapshot_ShouldReturnValidSnapshot()
     {
@@ -122,7 +118,7 @@ public class ApologiesGameTest
         var game = CreateGameWithCards([CardDeck.CardTypes.One]);
 
         // Act
-        game.ExecuteAction(new ActionArgs.DrawCardArgs(), _players[0]);
+        game.ExecuteAction("draw", _players[0]);
         var snapshot = game.GetSnapshot();
 
         // Assert
@@ -134,12 +130,12 @@ public class ApologiesGameTest
     {
         // Arrange
         var game = CreateGameWithCards([CardDeck.CardTypes.One]);
-        var res = (game.ExecuteAction(new ActionArgs.DrawCardArgs(), _players[0]) as ActionResponses.DrawCardResponse)!;
+        var res = (game.ExecuteAction("draw", _players[0]) as ActionResponses.DrawCardResponse)!;
         var moveOpt = res.Movesets.ElementAt(0).Opts.ElementAt(0);
         var move = new GenericComponents.Move(moveOpt.From, moveOpt.To, moveOpt.Effects.First());
 
         // Act
-        game.ExecuteAction(new ActionArgs.MovePawnArgs(move), _players[0]);
+        game.ExecuteAction("move", _players[0], ToJsonElement(new ActionArgs.MovePawnArgs(move)));
         var snapshot = game.GetSnapshot();
 
         // Assert
@@ -163,9 +159,9 @@ public class ApologiesGameTest
         gameBoard.PawnTiles[0][0] = before;
 
         // Act
-        game.ExecuteAction(new ActionArgs.DrawCardArgs(), _players[0]);
+        game.ExecuteAction("draw", _players[0]);
         var move = new GenericComponents.Move("a_s5", "a_H", 0);
-        game.ExecuteAction(new ActionArgs.MovePawnArgs(move), _players[0]);
+        game.ExecuteAction("move", _players[0], ToJsonElement(new ActionArgs.MovePawnArgs(move)));
         var snapshot = game.GetSnapshot();
 
         // Assert
@@ -183,11 +179,11 @@ public class ApologiesGameTest
         
         gameBoard.PawnTiles[0][0] = GameBoardTest.BoardTileDfs(gameBoard, "a_10")!;
         
-        game.ExecuteAction(new ActionArgs.DrawCardArgs(), _players[0]);
+        game.ExecuteAction("draw", _players[0]);
         var firstMove = new GenericComponents.Move("a_10", "a_12", 0);
 
         // Act
-        game.ExecuteAction(new ActionArgs.MovePawnArgs(firstMove), _players[0]);
+        game.ExecuteAction("move", _players[0], ToJsonElement(new ActionArgs.MovePawnArgs(firstMove)));
         var snapshot = game.GetSnapshot();
 
         // Assert
@@ -202,13 +198,12 @@ public class ApologiesGameTest
         typeof(ApologiesGame)
             .GetProperty("GameState", BindingFlags.NonPublic | BindingFlags.Instance)
             ?.SetValue(game, ApologiesGame.State.P1Draw);
-        game.ExecuteAction(new ActionArgs.DrawCardArgs(), _players[0]);
+        game.ExecuteAction("draw", _players[0]);
         var invalidMove = new GenericComponents.Move("invalid", "invalid", 0);
-
-
+        
         // Act
         Assert.Throws<InvalidMoveException>(() => 
-            game.ExecuteAction(new ActionArgs.MovePawnArgs(invalidMove), _players[0]));
+            game.ExecuteAction("move", _players[0], ToJsonElement(new ActionArgs.MovePawnArgs(invalidMove))));
         var snapshot = game.GetSnapshot();
 
         // Assert
@@ -224,5 +219,13 @@ public class ApologiesGameTest
         typeof(ApologiesGame).GetField("_cardDeck", BindingFlags.NonPublic | BindingFlags.Instance)
             ?.SetValue(game, cardDeck);
         return game;
+    }
+    
+    private static JsonElement? ToJsonElement(object? obj)
+    {
+        if (obj is null) return null;
+
+        var json = JsonSerializer.Serialize(obj);
+        return JsonDocument.Parse(json).RootElement;
     }
 }

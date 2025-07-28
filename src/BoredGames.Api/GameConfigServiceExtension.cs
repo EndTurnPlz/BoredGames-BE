@@ -1,9 +1,9 @@
-using BoredGames.Core.Game;
 using System.Reflection;
+using BoredGames.Core.Game;
 
-namespace BoredGames.Services;
+namespace BoredGames;
 
-public static class GameConfigServiceExtensions
+public static class GameConfigServiceExtension
 {
    public static IServiceCollection AddGameConfigs(this IServiceCollection services)
     {
