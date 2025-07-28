@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 namespace BoredGames.Games.Apologies.Models;
 
 
-public static class GenericComponents
+public static class GenericModels
 {
     [UsedImplicitly]
     public record Move(

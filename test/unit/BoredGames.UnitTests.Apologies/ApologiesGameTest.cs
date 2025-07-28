@@ -60,7 +60,7 @@ public class ApologiesGameTest
     {
         // Arrange
         var game = new ApologiesGame(_players);
-        var move = new GenericComponents.Move("a_1", "a_3", 0);
+        var move = new GenericModels.Move("a_1", "a_3", 0);
         
         // Act & Assert
         Assert.Throws<InvalidPlayerException>(() =>
@@ -132,7 +132,7 @@ public class ApologiesGameTest
         var game = CreateGameWithCards([CardDeck.CardTypes.One]);
         var res = (game.ExecuteAction("draw", _players[0]) as ActionResponses.DrawCardResponse)!;
         var moveOpt = res.Movesets.ElementAt(0).Opts.ElementAt(0);
-        var move = new GenericComponents.Move(moveOpt.From, moveOpt.To, moveOpt.Effects.First());
+        var move = new GenericModels.Move(moveOpt.From, moveOpt.To, moveOpt.Effects.First());
 
         // Act
         game.ExecuteAction("move", _players[0], ToJsonElement(new ActionArgs.MovePawnArgs(move)));
@@ -160,7 +160,7 @@ public class ApologiesGameTest
 
         // Act
         game.ExecuteAction("draw", _players[0]);
-        var move = new GenericComponents.Move("a_s5", "a_H", 0);
+        var move = new GenericModels.Move("a_s5", "a_H", 0);
         game.ExecuteAction("move", _players[0], ToJsonElement(new ActionArgs.MovePawnArgs(move)));
         var snapshot = game.GetSnapshot();
 
@@ -180,7 +180,7 @@ public class ApologiesGameTest
         gameBoard.PawnTiles[0][0] = GameBoardTest.BoardTileDfs(gameBoard, "a_10")!;
         
         game.ExecuteAction("draw", _players[0]);
-        var firstMove = new GenericComponents.Move("a_10", "a_12", 0);
+        var firstMove = new GenericModels.Move("a_10", "a_12", 0);
 
         // Act
         game.ExecuteAction("move", _players[0], ToJsonElement(new ActionArgs.MovePawnArgs(firstMove)));
@@ -199,7 +199,7 @@ public class ApologiesGameTest
             .GetProperty("GameState", BindingFlags.NonPublic | BindingFlags.Instance)
             ?.SetValue(game, ApologiesGame.State.P1Draw);
         game.ExecuteAction("draw", _players[0]);
-        var invalidMove = new GenericComponents.Move("invalid", "invalid", 0);
+        var invalidMove = new GenericModels.Move("invalid", "invalid", 0);
         
         // Act
         Assert.Throws<InvalidMoveException>(() => 

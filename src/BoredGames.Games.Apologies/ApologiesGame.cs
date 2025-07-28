@@ -47,10 +47,10 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
             PlayerMovesMade[playerIndex]++;
         }
 
-        public GenericComponents.GameStats GetStats()
+        public GenericModels.GameStats GetStats()
         {
             var timeSpan = (_gameEndTimestamp ?? DateTime.Now) - _gameStartTimestamp;
-            return new GenericComponents.GameStats(PlayerMovesMade, PlayerPawnsKilled, (int)timeSpan.TotalSeconds);
+            return new GenericModels.GameStats(PlayerMovesMade, PlayerPawnsKilled, (int)timeSpan.TotalSeconds);
         }
     }
 
