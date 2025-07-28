@@ -371,6 +371,11 @@ public class GameBoard
         if (tile is not WalkableTile) return true;
         return !Array.Exists(PawnTiles[playerIndex], x => x.Name == tile.Name);
     }
+    
+    [Pure]
+    public bool PlayerExistsWithAllPawnsHome => Array.Exists(PawnTiles, playerPawnTiles =>
+                                                    Array.TrueForAll(playerPawnTiles, pawnTile => 
+                                                        pawnTile is HomeTile));
 
     // Helper that builds the game board
     private void BuildGameBoard()

@@ -18,7 +18,7 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
     
     private readonly GameStats _stats = new();
         
-    public override bool HasEnded() => GameState == State.End;
+    public override bool HasEnded() => GameState is State.End;
     
     [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]    
     public enum State
@@ -136,11 +136,8 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
         if (noMoves && isDrawState) {
             nextGameState = (State)(((int)GameState + 2) % 8);
         }
-
-        var gameWon = Array.Exists(_gameBoard.PawnTiles, playerPawnTiles =>
-            Array.TrueForAll(playerPawnTiles, pawnTile => pawnTile is HomeTile)
-        );
-        if (gameWon) {
+        
+        if (_gameBoard.PlayerExistsWithAllPawnsHome) {
             nextGameState = State.End;
         }
         
