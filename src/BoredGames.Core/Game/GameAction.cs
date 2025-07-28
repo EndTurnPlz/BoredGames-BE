@@ -1,70 +1,75 @@
-using JetBrains.Annotations;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace BoredGames.Core.Game;
 
 public class GameAction
 {
-    private readonly Func<object, Player?, IGameActionResponse?> _action;
-    public readonly Type ArgType;
-    private readonly bool _requiresPlayer;
+    private readonly Func<GameBase, Player, IGameActionArgs?, IGameActionResponse?> _action;
+    public readonly Type? ArgsType;
     
     // --- Private Constructor ---
-    private GameAction(Func<object, Player?, IGameActionResponse?> action, Type argType, bool requiresPlayer)
+    private GameAction(Func<GameBase, Player, IGameActionArgs?, IGameActionResponse?> action, Type? argsType)
     {
         _action = action;
-        ArgType = argType;
-        _requiresPlayer = requiresPlayer;
-    }
-
-    // --- Public Static Factory Methods ---
-    
-    // Factory for: No player, return value
-    [UsedImplicitly]
-    public static GameAction Create<TArgs>(Func<TArgs, IGameActionResponse?> action) 
-        where TArgs : class, IGameActionArgs
-    {
-        return new GameAction(WrappedAction, typeof(TArgs), false);
-
-        IGameActionResponse? WrappedAction(object args, Player? _)
-        {
-            return action((TArgs)args);
-        }
+        ArgsType = argsType;
     }
     
-    // Factory for: Player, no return value
-    [UsedImplicitly]
-    public static GameAction Create<TArgs>(Action<TArgs, Player> action) 
-        where TArgs : class, IGameActionArgs
+    // --- Public factory method ---
+    public static GameAction Create(MethodInfo method, GameBase gameInstance)
     {
-        return new GameAction(WrappedAction, typeof(TArgs), true);
+        var gameType = gameInstance.GetType();
+        var parameters = method.GetParameters();
+        if (parameters.Length > 2) throw new ArgumentException("Game actions must have at most two parameters.");
 
-        IGameActionResponse? WrappedAction(object args, Player? p)
-        {
-            action((TArgs)args, p!); return null;
+        // Discover signature
+        var argsParamInfo = parameters.SingleOrDefault(p => typeof(IGameActionArgs).IsAssignableFrom(p.ParameterType));
+        var argsType = argsParamInfo?.ParameterType;
+        if (parameters[0] is null)
+            throw new ArgumentException("A game action requires that a player object be passed as the first parameter. ");
+
+        // Define expression parameters for the final delegate
+        var gameInstanceParam = Expression.Parameter(typeof(GameBase), "game");
+        var playerParam = Expression.Parameter(typeof(Player), "player");
+        var argsParam = Expression.Parameter(typeof(IGameActionArgs), "args");
+
+        // Create expressions to cast the generic parameters to the specific types needed by the method
+        var castGameInstance = Expression.Convert(gameInstanceParam, gameType);
+        
+        // Build the list of arguments for the final method call
+        List<Expression> methodCallArgs = [playerParam];
+        if (argsType != null) {
+            var castArgs = Expression.Convert(argsParam, argsType);
+            methodCallArgs.Add(castArgs);
         }
-    }
 
-    // Factory for: Player and typed arguments, return value
-    [UsedImplicitly]
-    public static GameAction Create<TArgs>(Func<TArgs, Player, IGameActionResponse?> action) 
-        where TArgs : class, IGameActionArgs
-    {
-        return new GameAction(WrappedAction, typeof(TArgs), true);
+        var methodCall = Expression.Call(castGameInstance, method, methodCallArgs);
 
-        IGameActionResponse? WrappedAction(object args, Player? p)
-        {
-            return action((TArgs)args, p!);
-        }
+        // Ensure the return type is correctly handled (void vs. returning a response)
+        Expression finalBody = method.ReturnType == typeof(void)
+            ? Expression.Block(methodCall, Expression.Constant(null, typeof(IGameActionResponse)))
+            : Expression.Convert(methodCall, typeof(IGameActionResponse));
+
+        var lambda = Expression.Lambda<Func<GameBase, Player, IGameActionArgs?, IGameActionResponse?>>(
+            finalBody,
+            gameInstanceParam,
+            playerParam,
+            argsParam
+        );
+
+        // Compile the tree into a highly optimized delegate.
+        var compiledDelegate = lambda.Compile();
+
+        return new GameAction(compiledDelegate, argsType);
     }
         
-    public IGameActionResponse? Execute(IGameActionArgs args, Player? player)
+    public IGameActionResponse? Execute(GameBase gameInstance, Player player, IGameActionArgs? args = null)
     {
-        // Corrected and improved validation logic
-        if (_requiresPlayer && player is null) 
-            throw new ArgumentException("A Player is required for this action");
-        if (!ArgType.IsInstanceOfType(args))
-            throw new ArgumentException("Invalid argument type or null args provided when args were expected.");
+        if (!ArgsType?.IsInstanceOfType(args) ?? args is not null)
+            throw new ArgumentException($"Invalid argument type provided. " + 
+                                        $"Expected: {ArgsType?.Name ?? "null"}, " +
+                                        $"Actual: {args?.GetType().Name ?? "null"}.");
         
-        return _action.Invoke(args, player);
+        return _action(gameInstance, player, args);
     }
 }

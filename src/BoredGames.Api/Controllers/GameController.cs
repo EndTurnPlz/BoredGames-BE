@@ -1,3 +1,4 @@
+using System.Text.Json;
 using BoredGames.Core.Game;
 using BoredGames.Core.Room;
 using BoredGames.Services;
@@ -23,13 +24,13 @@ public class GameController(RoomManager roomManager) : ControllerBase
     }
     
     [Produces("application/json")]
-    [HttpPost("action")]
-    public ActionResult GameAction([FromRoute] Guid roomId, [FromHeader(Name = "X-Player-Key")] Guid? playerId, 
-        [FromBody] IGameActionArgs actionArgs)
+    [HttpPost("action/{actionName}")]
+    public ActionResult GameAction([FromRoute] Guid roomId, [FromRoute] string actionName,
+        [FromHeader(Name = "X-Player-Key")] Guid playerId, [FromBody] JsonElement? actionArgs)
     {
         try {
             var room = roomManager.GetRoom(roomId);
-            return Ok(room.ExecuteGameAction(actionArgs, playerId));
+            return Ok(room.ExecuteGameAction(actionName, playerId, actionArgs));
         } catch (Exception ex) when (ex is RoomException or GameException) {
             return BadRequest(ex.Message);
         }

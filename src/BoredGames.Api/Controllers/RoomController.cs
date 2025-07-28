@@ -56,7 +56,11 @@ public class RoomController(RoomManager roomManager, PlayerConnectionManager pla
 
         try {
             var room = roomManager.GetRoom(roomId);
-            playerConnectionManager.AddConnection(playerId, Response);
+            var ok = playerConnectionManager.AddConnection(playerId, Response);
+            if (!ok) {
+                Response.StatusCode = 409;
+                return;
+            }
             room.RegisterPlayerConnected(playerId);
             
             while (!cancellationToken.IsCancellationRequested) {

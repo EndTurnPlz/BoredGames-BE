@@ -63,8 +63,8 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
             _stats.GetStats(), turnOrder, pieces);
     }
 
-    [GameAction]
-    private ActionResponses.DrawCardResponse DrawCardAction(ActionArgs.DrawCardArgs _, Player player)
+    [GameAction("draw")]
+    private ActionResponses.DrawCardResponse DrawCardAction(Player player)
     {
         var playerIndex = Players.IndexOf(player);
         var isCorrectPlayerDrawing = playerIndex * 2 == (int)GameState; 
@@ -79,8 +79,8 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
         return new ActionResponses.DrawCardResponse((int)lastDrawn, validMoves);
     }
 
-    [GameAction]
-    private void MovePawnAction(ActionArgs.MovePawnArgs req, Player player)
+    [GameAction("move")]
+    private void MovePawnAction(Player player, ActionArgs.MovePawnArgs req)
     {
         var playerIndex = Players.IndexOf(player);
         var isCorrectPlayerMoving = playerIndex * 2 + 1 == (int)GameState; 

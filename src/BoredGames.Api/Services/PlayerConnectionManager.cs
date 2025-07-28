@@ -23,9 +23,9 @@ public sealed class PlayerConnectionManager : IDisposable
         _tickerCts.Dispose();
     }
     
-    public void AddConnection(Guid playerId, HttpResponse response)
+    public bool AddConnection(Guid playerId, HttpResponse response)
     {
-        _connections.TryAdd(playerId, response);
+        return _connections.TryAdd(playerId, response);
     }
 
     public void RemoveConnection(Guid playerId)

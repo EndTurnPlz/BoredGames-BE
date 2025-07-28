@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json;
 using BoredGames.Core.Game;
 
 namespace BoredGames.Core.Room;
@@ -23,12 +24,14 @@ public class GameRoom
     // Concurrency
     private readonly Lock _lock = new();
     
-    // Event Emitter
+    // Event
     public event EventHandler? RoomChanged;
     
-    // Event emitter (not thread safe)
     private void EmitRoomChangedEvent()
     {
+        if (!_lock.IsHeldByCurrentThread) {
+            throw new SynchronizationLockException("Current thread does not hold the room lock");
+        }
         ViewNum++;
         var snapshot = GetSnapshot();
         var playerIds = _players.Select(p => p.Id);
@@ -74,13 +77,13 @@ public class GameRoom
         lock (_lock) {
             // If still waiting for players
             if (CurrentState is State.WaitingForPlayers) {
-                var pendingPlayer = _pendingPlayers.FirstOrDefault(p => p.Id == playerId) 
+                var pendingPlayer = _pendingPlayers.SingleOrDefault(p => p.Id == playerId) 
                                     ?? throw new PlayerNotFoundException();
                 _players.Add(pendingPlayer);
                 _pendingPlayers.Remove(pendingPlayer);
             }
             
-            var player = _players.FirstOrDefault(p => p.Id == playerId) 
+            var player = _players.SingleOrDefault(p => p.Id == playerId) 
                          ?? throw new PlayerNotFoundException();
             player.IsConnected = true;
             ViewNum++;
@@ -93,7 +96,7 @@ public class GameRoom
         lock (_lock) {
             if (_players.All(p => p.Id != playerId)) throw new PlayerNotFoundException();
         
-            var player = _players.First(p => p.Id == playerId);
+            var player = _players.Single(p => p.Id == playerId);
             player.IsConnected = false;
 
             if (CurrentState is State.WaitingForPlayers) {
@@ -120,13 +123,13 @@ public class GameRoom
         }
     } 
 
-    public IGameActionResponse? ExecuteGameAction(IGameActionArgs args, Guid? playerId = null)
+    public IGameActionResponse? ExecuteGameAction(string actionName, Guid playerId, JsonElement? args)
     {
         lock (_lock) {
             if (CurrentState is State.WaitingForPlayers) throw new RoomNotStartedException();
         
-            var player = playerId is not null ? _players.FirstOrDefault(p => p.Id == playerId) : null;
-            var result = _game!.ExecuteAction(args, player);
+            var player = _players.SingleOrDefault(p => p.Id == playerId) ?? throw new PlayerNotFoundException();
+            var result = _game!.ExecuteAction(actionName, player, args);
             if (_game!.HasEnded()) CurrentState = State.GameEnded;
             LastIdleAt = DateTime.Now;
             EmitRoomChangedEvent();
