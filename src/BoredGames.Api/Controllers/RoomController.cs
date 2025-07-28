@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BoredGames.Controllers;
 
 [ApiController]
-[Route("room")]
+[Route("api/room")]
 public class RoomController(RoomManager roomManager, PlayerConnectionManager playerConnectionManager) : ControllerBase
 {
 
@@ -59,6 +59,7 @@ public class RoomController(RoomManager roomManager, PlayerConnectionManager pla
             var ok = playerConnectionManager.AddConnection(playerId, Response);
             if (!ok) {
                 Response.StatusCode = 409;
+                Response.Body.Close();
                 return;
             }
             room.RegisterPlayerConnected(playerId);
@@ -76,17 +77,17 @@ public class RoomController(RoomManager roomManager, PlayerConnectionManager pla
             Response.StatusCode = 404;
         }
         finally {
-            playerConnectionManager.RemoveConnection(playerId);
+            if (Response.StatusCode != 409) {
+                playerConnectionManager.RemoveConnection(playerId);
 
-            try {
-                var room = roomManager.GetRoom(roomId);
-                room.RegisterPlayerDisconnected(playerId);
-            }
-            catch (RoomException) {
-                // Ignore
-            }
-            finally {
-                Response.Body.Close();
+                try {
+                    var room = roomManager.GetRoom(roomId);
+                    room.RegisterPlayerDisconnected(playerId);
+                }
+                catch (RoomException) {}
+                finally {
+                    Response.Body.Close();
+                }
             }
         }
     }

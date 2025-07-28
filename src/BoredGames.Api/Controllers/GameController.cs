@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BoredGames.Controllers;
 
 [ApiController]
-[Route("game/{roomId:guid}")]
+[Route("api/game/{roomId:guid}")]
 public class GameController(RoomManager roomManager) : ControllerBase
 {
     [Produces("application/json")]
