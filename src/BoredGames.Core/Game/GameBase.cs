@@ -62,24 +62,6 @@ public abstract class GameBase
 
         return actionMap.ToFrozenDictionary();
     }
-
-    // // Helper method to build the correct Action<> or Func<> type
-    // private static Type GetDelegateTypeForMethod(MethodInfo method)
-    // {
-    //     var parameterTypes = method.GetParameters().Select(p => p.ParameterType).ToList();
-    //
-    //     if (method.ReturnType == typeof(void))
-    //     {
-    //         // e.g., Action<Player, PlaceTileArgs>
-    //         return Type.GetType($"System.Action`{parameterTypes.Count}")!.MakeGenericType(parameterTypes.ToArray());
-    //     }
-    //     else
-    //     {
-    //         // e.g., Func<Player, DrawCardArgs, DrawCardResponse>
-    //         parameterTypes.Add(method.ReturnType);
-    //         return Type.GetType($"System.Func`{parameterTypes.Count}")!.MakeGenericType(parameterTypes.ToArray());
-    //     }
-    // }
 }
 
 public interface IGameSnapshot;
