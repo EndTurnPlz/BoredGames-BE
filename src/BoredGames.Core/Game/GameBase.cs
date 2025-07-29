@@ -72,5 +72,6 @@ public interface IGameActionResponse;
 
 public enum GameTypes
 {
-    Apologies
+    Apologies,
+    UpsAndDowns
 }
