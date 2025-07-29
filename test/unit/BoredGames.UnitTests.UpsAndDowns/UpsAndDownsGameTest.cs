@@ -38,15 +38,6 @@ public class UpsAndDownsGameTests
         return (game, players);
     }
 
-    private void ReplaceGameBoardWithNoWarpTiles(UpsAndDownsGame game)
-    {
-        var gameBoardField = typeof(UpsAndDownsGame).GetField("_gameBoard", BindingFlags.NonPublic | BindingFlags.Instance);
-        var playersField = typeof(UpsAndDownsGame).GetField("Players", BindingFlags.NonPublic | BindingFlags.Instance);
-        var players = playersField?.GetValue(game) as ImmutableList<Player>;
-        var emptyWarpTilesBoard = GameBoard.Create(players!.Count, new Dictionary<int, int>());
-        gameBoardField?.SetValue(game, emptyWarpTilesBoard);
-    }
-
     //---------------------------------------------------------------------------------
     
     [Fact]
@@ -86,7 +77,9 @@ public class UpsAndDownsGameTests
     {
         // Arrange
         var (game, players) = CreateGame(2);
-        ReplaceGameBoardWithNoWarpTiles(game);
+        var gameBoardField = typeof(UpsAndDownsGame).GetField("_gameBoard", BindingFlags.NonPublic | BindingFlags.Instance);
+        var emptyWarpTilesBoard = GameBoard.Create(players!.Count, new Dictionary<int, int>());
+        gameBoardField?.SetValue(game, emptyWarpTilesBoard);
         
         var initialSnapshot = (UpsAndDownsSnapshot)game.GetSnapshot();
         var p1InitialPosition = initialSnapshot.PlayerLocations.ElementAt(0);
