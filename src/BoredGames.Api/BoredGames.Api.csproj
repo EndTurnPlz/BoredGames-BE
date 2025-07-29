@@ -16,6 +16,7 @@
     <ItemGroup>
         <ProjectReference Include="..\BoredGames.Games.Apologies\BoredGames.Games.Apologies.csproj" />
         <ProjectReference Include="..\BoredGames.Core\BoredGames.Core.csproj" />
+        <ProjectReference Include="..\BoredGames.Games.UpsAndDowns\BoredGames.Games.UpsAndDowns.csproj" />
     </ItemGroup>
 
 </Project>
