@@ -1,6 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoredGames.Api", "src\BoredGames.Api\BoredGames.Api.csproj", "{C144B3C8-715D-4D4B-A942-051A065C303D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{682F2632-3715-40FE-874B-18D5494F6B00} = {682F2632-3715-40FE-874B-18D5494F6B00}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoredGames.Core", "src\BoredGames.Core\BoredGames.Core.csproj", "{8B338131-FCA2-4854-91C4-FCCF32F7A9D8}"
 EndProject
