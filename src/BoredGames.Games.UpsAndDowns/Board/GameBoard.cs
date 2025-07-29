@@ -1,14 +1,35 @@
+using System.Collections.Frozen;
+
 namespace BoredGames.Games.UpsAndDowns.Board;
 
-public class GameBoard(int playerCount)
+public class GameBoard
 {
-    private readonly List<int> _playerPosition = [
-        ..Enumerable.Range(0, playerCount)
-    ];
+    private readonly List<int> _playerPositions;
+    public IReadOnlyList<int> PlayerPositions => _playerPositions;
+
+    public readonly FrozenDictionary<int, int> WarpTiles;
+    public bool IsPlayerOnEnd => _playerPositions.Contains(100);
+
+    private GameBoard(int playerCount, Dictionary<int, int> warpTiles)
+    {
+        WarpTiles = warpTiles.ToFrozenDictionary();
+        _playerPositions = Enumerable.Repeat(0, playerCount).ToList();
+    }
+
+    public void MovePlayer(int playerIndex, int moveDistance)
+    {
+        var currentPosition = _playerPositions[playerIndex];
+        var newPosition = currentPosition + moveDistance;
+
+        if (newPosition > 100) {
+            newPosition = currentPosition;
+        }
+
+        newPosition = WarpTiles.GetValueOrDefault(newPosition, newPosition);
+        _playerPositions[playerIndex] = newPosition;
+    }
     
-    public IReadOnlyList<int> PlayerPositions => _playerPosition;
-    
-    public readonly Dictionary<int, int> WarpTiles = new()
+    private static readonly Dictionary<int, int> DefaultWarpTiles = new()
     {
         {1, 38},
         {4, 14},
@@ -27,18 +48,18 @@ public class GameBoard(int playerCount)
         {97, 78}
     };
 
-    public bool IsPlayerOnEnd => _playerPosition.Contains(100);
-    
-    public void MovePlayer(int playerIndex, int moveDistance)
+    public static GameBoard Create(int playerCount, Dictionary<int, int> warpTiles)
     {
-        var currentPosition = _playerPosition[playerIndex];
-        var newPosition = currentPosition + moveDistance;
-
-        if (newPosition > 100) {
-            newPosition = currentPosition;
-        }
-
-        newPosition = WarpTiles.GetValueOrDefault(newPosition, newPosition);
-        _playerPosition[playerIndex] = newPosition;
+        return new GameBoard(playerCount, warpTiles);
     }
+
+    public static GameBoard CreateWithDefaultWarpTiles(int playerCount)
+    {
+        return Create(playerCount, DefaultWarpTiles);
+    }
+
+    // public static GameBoard CreateAndGenerateWarpTiles(int playerCount)
+    // {
+    //     
+    // }
 }

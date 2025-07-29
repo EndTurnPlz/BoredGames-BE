@@ -8,5 +8,5 @@ public record UpsAndDownsSnapshot(
     UpsAndDownsGame.State GameState,
     IEnumerable<int> PlayerLocations,
     IEnumerable<GenericModels.WarpTileInfo> BoardLayout,
-    int LastRollValue) : IGameSnapshot;
+    int LastDieRoll) : IGameSnapshot;
     

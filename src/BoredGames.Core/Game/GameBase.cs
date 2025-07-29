@@ -29,6 +29,8 @@ public abstract class GameBase
 
     public IGameActionResponse? ExecuteAction(string actionName, Player player, JsonElement? rawArgs = null)
     {
+        if (HasEnded()) throw new InvalidOperationException("Game has ended.");
+        
         var action = ActionMap.GetValueOrDefault(actionName) ?? throw new InvalidActionException();
 
         if (action.ArgsType is null) {

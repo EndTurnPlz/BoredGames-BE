@@ -12,7 +12,7 @@ public class UpsAndDownsGame(ImmutableList<Player> playerList) : GameBase(player
 {
     private readonly StandardDie _die = new();
 
-    private readonly GameBoard _gameBoard = new(playerList.Count);
+    private readonly GameBoard _gameBoard = GameBoard.CreateWithDefaultWarpTiles(playerList.Count);
 
     [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     public enum State
