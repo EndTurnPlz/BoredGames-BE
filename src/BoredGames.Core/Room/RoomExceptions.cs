@@ -10,3 +10,4 @@ public sealed class PlayerNotHostException() : RoomException("Player is not host
 public sealed class PlayerNotFoundException() : RoomException("Player Not Found");
 public sealed class CreateRoomFailedException() : RoomException("Room failed to create");
 public sealed class PlayerAlreadyConnectedException() : RoomException("Player already connected");
+public sealed class PlayerNotConnectedException() : RoomException("Player Not Connected");

@@ -127,8 +127,9 @@ public class GameRoom
     {
         lock (_lock) {
             if (CurrentState is State.WaitingForPlayers) throw new RoomNotStartedException();
-        
+            
             var player = _players.SingleOrDefault(p => p.Id == playerId) ?? throw new PlayerNotFoundException();
+            if (!player.IsConnected) throw new PlayerNotConnectedException();
             var result = _game!.ExecuteAction(actionName, player, args);
             if (_game!.HasEnded()) CurrentState = State.GameEnded;
             LastIdleAt = DateTime.Now;
