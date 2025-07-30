@@ -40,7 +40,7 @@ public class UpsAndDownsGame(ImmutableList<Player> playerList) : GameBase(player
     private void PlayerMoveAction(Player player)
     {
         var playerIndex = Players.IndexOf(player);
-        if (playerIndex == -1) throw new InvalidPlayerException();
+        if (playerIndex != (int)GameState) throw new InvalidPlayerException();
         
         var rollValue = _die.Roll();
         _gameBoard.MovePlayer(playerIndex, rollValue);

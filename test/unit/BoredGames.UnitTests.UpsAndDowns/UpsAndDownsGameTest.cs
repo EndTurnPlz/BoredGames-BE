@@ -176,4 +176,25 @@ public class UpsAndDownsGameTests
         Assert.Equal(initialSnapshot.PlayerLocations, newSnapshot.PlayerLocations);
         Assert.Equal(initialSnapshot.LastDieRoll, newSnapshot.LastDieRoll);
     }
+    
+    //---------------------------------------------------------------------------------
+    
+    [Fact]
+    public void PlayerMoveAction_WhenNotPlayersTurn_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var (game, players) = CreateGame(2);
+    
+        // The game starts in P1's turn by default.
+        var initialSnapshot = game.GetSnapshot() as UpsAndDownsSnapshot;
+
+        // Act & Assert
+        // Attempting to move Player 2 during Player 1's turn should fail.
+        Assert.Throws<InvalidPlayerException>(() => game.ExecuteAction("move", players[1]));
+    
+        // Verify that the game state has not changed.
+        var finalSnapshot = game.GetSnapshot() as UpsAndDownsSnapshot;
+        Assert.Equal(initialSnapshot!.GameState, finalSnapshot!.GameState);
+        Assert.Equal(initialSnapshot!.PlayerLocations, finalSnapshot!.PlayerLocations);
+    }
 }
