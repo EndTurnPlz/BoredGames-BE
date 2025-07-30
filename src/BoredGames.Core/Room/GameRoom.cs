@@ -65,8 +65,16 @@ public class GameRoom
         lock (_lock) {
             if (CurrentState is not State.WaitingForPlayers) throw new RoomNotFoundException();
             if (_players.Count == 0 && player != _host) throw new RoomNotStartedException();
-            if (_players.Count >= _gameConfig.MaxPlayerCount) throw new RoomIsFullException();
-            if (_pendingPlayers.Count > 25) throw new RoomIsFullException();
+            if (_players.Count >= _gameConfig.MaxPlayerCount || _pendingPlayers.Count > 25) 
+            {
+                throw new RoomIsFullException();
+            }
+            
+            if (_pendingPlayers.Exists(p => p.Username == player.Username) ||
+                _players.Exists(p => p.Username == player.Username)) 
+            {
+                throw new NameAlreadyTakenException();
+            }
             
             _pendingPlayers.Add(player);
         }
