@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using BoredGames.Core;
 using BoredGames.Core.Game;
+using BoredGames.Core.Game.Attributes;
 using BoredGames.Core.Game.Components.Dice;
 using BoredGames.Games.UpsAndDowns.Board;
 using BoredGames.Games.UpsAndDowns.Models;
@@ -8,6 +9,7 @@ using JetBrains.Annotations;
 
 namespace BoredGames.Games.UpsAndDowns;
 
+[BoredGame("UpsAndDowns")]
 public class UpsAndDownsGame(ImmutableList<Player> playerList) : GameBase(playerList)
 {
     private readonly StandardDie _die = new();

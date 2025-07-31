@@ -10,7 +10,7 @@ namespace BoredGames.Services;
 public sealed class RoomManager : IDisposable
 {
     private readonly ConcurrentDictionary<Guid, GameRoom> _rooms = new();
-    private readonly FrozenDictionary<GameTypes, IGameConfig> _configs;
+    private readonly FrozenDictionary<string, IGameConfig> _configs;
     private readonly CancellationTokenSource _tickerCts = new();
     
     private readonly TimeSpan _abandonedRoomTimeout = TimeSpan.FromMinutes(5);
@@ -20,7 +20,7 @@ public sealed class RoomManager : IDisposable
     public RoomManager(IEnumerable<IGameConfig> gameConfigs, PlayerConnectionManager playerConnectionManager,
         ILogger<RoomManager> logger) 
     {
-        _configs = gameConfigs.ToFrozenDictionary(c => c.GameType, c => c);
+        _configs = gameConfigs.ToFrozenDictionary(c => c.GetGameName(), c => c);
         _playerConnectionManager = playerConnectionManager;
         _logger = logger;
     }
@@ -72,7 +72,7 @@ public sealed class RoomManager : IDisposable
         }
     }
 
-    public Guid CreateRoom(GameTypes gameType, Player host)
+    public Guid CreateRoom(string gameType, Player host)
     {
         if (!_configs.TryGetValue(gameType, out var config)) throw new CreateRoomFailedException();
         

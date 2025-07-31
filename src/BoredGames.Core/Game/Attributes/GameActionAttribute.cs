@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 
-namespace BoredGames.Core.Game;
+namespace BoredGames.Core.Game.Attributes;
 
 [MeansImplicitUse]
 [AttributeUsage(AttributeTargets.Method)]

@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using BoredGames.Core;
 using BoredGames.Core.Game;
+using BoredGames.Core.Game.Attributes;
 using BoredGames.Games.Apologies.Board;
 using BoredGames.Games.Apologies.Deck;
 using BoredGames.Games.Apologies.Models;
@@ -8,6 +9,7 @@ using JetBrains.Annotations;
 
 namespace BoredGames.Games.Apologies;
 
+[BoredGame("Apologies")]
 public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(players)
 {
 

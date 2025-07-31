@@ -1,5 +1,4 @@
 using BoredGames.Core;
-using BoredGames.Core.Game;
 using BoredGames.Core.Room;
 using BoredGames.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -17,13 +16,8 @@ public class RoomController(RoomManager roomManager, PlayerConnectionManager pla
     {
         var player = new Player(playerName);
         
-        var ok = Enum.TryParse<GameTypes>(gameType, out var resolvedType);
-        if (!ok) {
-            return NotFound("Invalid game type");
-        }
-        
         var playerId = player.Id;
-        var roomId = roomManager.CreateRoom(resolvedType, player);
+        var roomId = roomManager.CreateRoom(gameType, player);
         return Ok(new { playerId, roomId } );
     }
 

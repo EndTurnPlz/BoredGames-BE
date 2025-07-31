@@ -9,7 +9,7 @@ namespace BoredGames.Games.UpsAndDowns;
 [UsedImplicitly]
 public class UpsAndDownsGameConfig : IGameConfig
 {
-    public GameTypes GameType => GameTypes.UpsAndDowns;
+    public Type GameType => typeof(UpsAndDownsGame);
     public int MinPlayerCount => 2;
     public int MaxPlayerCount => 8;
 

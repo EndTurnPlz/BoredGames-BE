@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using BoredGames.Core.Game.Attributes;
 
 namespace BoredGames.Core.Game;
 
