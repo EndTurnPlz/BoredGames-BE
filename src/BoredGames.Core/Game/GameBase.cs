@@ -72,9 +72,3 @@ public interface IGameSnapshot;
 public interface IGameActionArgs;
 
 public interface IGameActionResponse;
-
-public enum GameTypes
-{
-    Apologies,
-    UpsAndDowns
-}
