@@ -34,12 +34,20 @@ public class UpsAndDownsGame : GameBase {
 
     public override bool HasEnded() => GameState is State.End;
 
-    public override IGameSnapshot GetSnapshot()
+    public override IGameSnapshot GetSnapshot(Player player)
     {
+        var turnOrder = Players.Select(p => p.Username).ToArray();
         var boardLayout = _gameBoard.WarpTiles
             .Select(pair => new GenericModels.WarpTileInfo(pair.Key, pair.Value));
-        
-        return new UpsAndDownsSnapshot(GameState, _gameBoard.PlayerPositions, boardLayout, _die.LastRollValue);
+
+        return new UpsAndDownsSnapshot
+        {
+            TurnOrder = turnOrder,
+            GameState = GameState,
+            PlayerLocations = _gameBoard.PlayerPositions,
+            BoardLayout = boardLayout,
+            LastDieRoll = _die.LastRollValue
+        };
     }
 
     [GameAction("move")]

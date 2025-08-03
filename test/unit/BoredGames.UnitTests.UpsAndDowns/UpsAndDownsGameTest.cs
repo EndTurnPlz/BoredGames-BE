@@ -47,7 +47,7 @@ public class UpsAndDownsGameTests
         var (game, _) = CreateGame(2);
 
         // Act
-        var snapshot = (UpsAndDownsSnapshot)game.GetSnapshot();
+        var snapshot = (UpsAndDownsSnapshot)game.GetSnapshot(_player1);
 
         // Assert
         Assert.False(game.HasEnded());
@@ -81,12 +81,12 @@ public class UpsAndDownsGameTests
         var emptyWarpTilesBoard = GameBoard.Create(players!.Count, new Dictionary<int, int>());
         gameBoardField?.SetValue(game, emptyWarpTilesBoard);
         
-        var initialSnapshot = (UpsAndDownsSnapshot)game.GetSnapshot();
+        var initialSnapshot = (UpsAndDownsSnapshot)game.GetSnapshot(_player1);
         var p1InitialPosition = initialSnapshot.PlayerLocations.ElementAt(0);
 
         // Act
         game.ExecuteAction("move", players[0]);
-        var newSnapshot = (UpsAndDownsSnapshot)game.GetSnapshot();
+        var newSnapshot = (UpsAndDownsSnapshot)game.GetSnapshot(_player1);
 
         // Assert
         Assert.Equal(UpsAndDownsGame.State.P2Turn, newSnapshot.GameState);
@@ -108,17 +108,17 @@ public class UpsAndDownsGameTests
         // Act & Assert
         // P1's Turn -> P2's Turn
         game.ExecuteAction("move", players[0]);
-        var snapshot1 = (UpsAndDownsSnapshot)game.GetSnapshot();
+        var snapshot1 = (UpsAndDownsSnapshot)game.GetSnapshot(_player1);
         Assert.Equal(UpsAndDownsGame.State.P2Turn, snapshot1.GameState);
         
         // P2's Turn -> P3's Turn
         game.ExecuteAction("move", players[1]);
-        var snapshot2 = (UpsAndDownsSnapshot)game.GetSnapshot();
+        var snapshot2 = (UpsAndDownsSnapshot)game.GetSnapshot(_player2);
         Assert.Equal(UpsAndDownsGame.State.P3Turn, snapshot2.GameState);
         
         // P3's Turn -> P1's Turn
         game.ExecuteAction("move", players[2]);
-        var snapshot3 = (UpsAndDownsSnapshot)game.GetSnapshot();
+        var snapshot3 = (UpsAndDownsSnapshot)game.GetSnapshot(_player3);
         Assert.Equal(UpsAndDownsGame.State.P1Turn, snapshot3.GameState);
     }
 
@@ -145,7 +145,7 @@ public class UpsAndDownsGameTests
         game.GetType().GetMethod("AdvanceGameState", BindingFlags.NonPublic | BindingFlags.Instance)?.Invoke(game, null);
         
         // Assert
-        var snapshot = (UpsAndDownsSnapshot)game.GetSnapshot();
+        var snapshot = (UpsAndDownsSnapshot)game.GetSnapshot(_player1);
         Assert.Equal(UpsAndDownsGame.State.End, snapshot.GameState);
         Assert.True(game.HasEnded());
     }
@@ -163,11 +163,11 @@ public class UpsAndDownsGameTests
         Assert.NotNull(gameStateProperty);
         gameStateProperty.SetValue(game, UpsAndDownsGame.State.End);
         
-        var initialSnapshot = (UpsAndDownsSnapshot)game.GetSnapshot();
+        var initialSnapshot = (UpsAndDownsSnapshot)game.GetSnapshot(_player1);
 
         // Act: Try to move a player after the game has ended
         Assert.Throws<InvalidOperationException>(() => game.ExecuteAction("move", players[0]));
-        var newSnapshot = (UpsAndDownsSnapshot)game.GetSnapshot();
+        var newSnapshot = (UpsAndDownsSnapshot)game.GetSnapshot(_player1);
 
         // Assert
         Assert.True(game.HasEnded());
@@ -186,14 +186,14 @@ public class UpsAndDownsGameTests
         var (game, players) = CreateGame(2);
     
         // The game starts in P1's turn by default.
-        var initialSnapshot = game.GetSnapshot() as UpsAndDownsSnapshot;
+        var initialSnapshot = game.GetSnapshot(_player1) as UpsAndDownsSnapshot;
 
         // Act & Assert
         // Attempting to move Player 2 during Player 1's turn should fail.
         Assert.Throws<InvalidPlayerException>(() => game.ExecuteAction("move", players[1]));
     
         // Verify that the game state has not changed.
-        var finalSnapshot = game.GetSnapshot() as UpsAndDownsSnapshot;
+        var finalSnapshot = game.GetSnapshot(_player1) as UpsAndDownsSnapshot;
         Assert.Equal(initialSnapshot!.GameState, finalSnapshot!.GameState);
         Assert.Equal(initialSnapshot!.PlayerLocations, finalSnapshot!.PlayerLocations);
     }

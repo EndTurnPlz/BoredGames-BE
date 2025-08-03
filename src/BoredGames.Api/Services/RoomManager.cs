@@ -21,7 +21,7 @@ public sealed class RoomManager(PlayerConnectionManager playerConnectionManager,
             if (sender is not GameRoom) throw new ArgumentNullException(nameof(sender));
             if (e is not RoomChangedEventArgs args) throw new InvalidDataException("Invalid event args type");
         
-            await playerConnectionManager.PushSnapshotToPlayersAsync(args.PlayerIds, args.Snapshot); 
+            await playerConnectionManager.PushSnapshotsToPlayersAsync(args.PlayerIds.ToList(), args.Snapshot.ToList()); 
         }
         catch (Exception ex) {
             logger.LogError(ex, "Could not push room snapshot to players"); 

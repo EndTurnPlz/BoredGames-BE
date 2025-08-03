@@ -30,7 +30,8 @@ public class GameController(RoomManager roomManager) : ControllerBase
     {
         try {
             var room = roomManager.GetRoom(roomId);
-            return Ok(room.ExecuteGameAction(actionName, playerId, actionArgs));
+            room.ExecuteGameAction(actionName, playerId, actionArgs);
+            return Ok();
         } catch (Exception ex) when (ex is RoomException or GameException) {
             return BadRequest(ex.Message);
         }

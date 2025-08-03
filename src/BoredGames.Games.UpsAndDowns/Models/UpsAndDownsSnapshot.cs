@@ -1,12 +1,15 @@
 using BoredGames.Core.Game;
-using JetBrains.Annotations;
 
 namespace BoredGames.Games.UpsAndDowns.Models;
 
-[UsedImplicitly]
-public record UpsAndDownsSnapshot(
-    UpsAndDownsGame.State GameState,
-    IEnumerable<int> PlayerLocations,
-    IEnumerable<GenericModels.WarpTileInfo> BoardLayout,
-    int LastDieRoll) : IGameSnapshot;
+public record UpsAndDownsSnapshot : IGameSnapshot
+{
+    public required IEnumerable<string> TurnOrder { get; init; }
+    public UpsAndDownsGame.State GameState { get; init; }
+    public required IEnumerable<int> PlayerLocations { get; init; }
+    public required IEnumerable<GenericModels.WarpTileInfo> BoardLayout { get; init; }
+    public int LastDieRoll { get; init; }
+}
+
+
     

@@ -33,18 +33,18 @@ public sealed class PlayerConnectionManager : IDisposable
         _connections.TryRemove(playerId, out _);
     }
 
-    public async Task PushSnapshotToPlayersAsync(IEnumerable<Guid> playerIds, RoomSnapshot snapshot)
+    public async Task PushSnapshotsToPlayersAsync(IList<Guid> playerIds, IList<RoomSnapshot> snapshots)
     {
-        foreach (var playerId in playerIds) {
-            if (!_connections.TryGetValue(playerId, out var response)) continue;
+        for (var i = 0; i < playerIds.Count; i++) {
+            if (!_connections.TryGetValue(playerIds[i], out var response)) continue;
             try {
                 // The 'data:' prefix is part of the SSE protocol.
-                var sseMessage = $"data: {JsonSerializer.Serialize(snapshot, SnapshotSerializerOpts)}\n\n";
+                var sseMessage = $"data: {JsonSerializer.Serialize(snapshots[i], SnapshotSerializerOpts)}\n\n";
                 await response.WriteAsync(sseMessage);
                 await response.Body.FlushAsync();
             }
             catch (Exception ex) when (ex is OperationCanceledException or InvalidOperationException) {
-                RemoveConnection(playerId);
+                RemoveConnection(playerIds[i]);
             }
         }
     }

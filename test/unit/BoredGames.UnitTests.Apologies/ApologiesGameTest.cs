@@ -36,7 +36,7 @@ public class ApologiesGameTest
     {
         // Arrange & Act
         var game = new ApologiesGame(new ApologiesGameConfig(), _players);
-        var snapshot = game.GetSnapshot();
+        var snapshot = game.GetSnapshot(_players[0]);
 
         // Assert
         Assert.False(game.HasEnded());
@@ -103,7 +103,7 @@ public class ApologiesGameTest
         var game = new ApologiesGame(new ApologiesGameConfig(), _players);
 
         // Act
-        var snapshot = game.GetSnapshot();
+        var snapshot = game.GetSnapshot(_players[0]);
 
         // Assert
         Assert.NotNull(snapshot);
@@ -119,7 +119,7 @@ public class ApologiesGameTest
 
         // Act
         game.ExecuteAction("draw", _players[0]);
-        var snapshot = game.GetSnapshot();
+        var snapshot = game.GetSnapshot(_players[0]);
 
         // Assert
         Assert.Equal(ApologiesGame.State.P1Move, snapshot.GameState);
@@ -130,15 +130,16 @@ public class ApologiesGameTest
     {
         // Arrange
         var game = CreateGameWithCards([CardDeck.CardTypes.One]);
-        var res = (game.ExecuteAction("draw", _players[0]) as ActionResponses.DrawCardResponse)!;
-        var moveOpt = res.Movesets.ElementAt(0).Opts.ElementAt(0);
+        game.ExecuteAction("draw", _players[0]);
+        var movesets = game.GetSnapshot(_players[0]).CurrentMoveset!;
+        var moveOpt = movesets.ElementAt(0).Opts.ElementAt(0);
         var move = new GenericModels.Move(moveOpt.From, moveOpt.To, moveOpt.Effects.First());
 
         // Act
         game.ExecuteAction("move", _players[0], ToJsonElement(new ActionArgs.MovePawnArgs(move)));
-        var snapshot = game.GetSnapshot();
+        var snapshot = game.GetSnapshot(_players[0]);
 
-        // Assert
+        // Assert 
         Assert.Equal(ApologiesGame.State.P2Draw, snapshot.GameState);
     }
 
@@ -162,7 +163,7 @@ public class ApologiesGameTest
         game.ExecuteAction("draw", _players[0]);
         var move = new GenericModels.Move("a_s5", "a_H", 0);
         game.ExecuteAction("move", _players[0], ToJsonElement(new ActionArgs.MovePawnArgs(move)));
-        var snapshot = game.GetSnapshot();
+        var snapshot = game.GetSnapshot(_players[0]);
 
         // Assert
         Assert.Equal(ApologiesGame.State.End, snapshot.GameState);
@@ -184,7 +185,7 @@ public class ApologiesGameTest
 
         // Act
         game.ExecuteAction("move", _players[0], ToJsonElement(new ActionArgs.MovePawnArgs(firstMove)));
-        var snapshot = game.GetSnapshot();
+        var snapshot = game.GetSnapshot(_players[0]);
 
         // Assert
         Assert.Equal(ApologiesGame.State.P1Draw, snapshot.GameState);
@@ -204,7 +205,7 @@ public class ApologiesGameTest
         // Act
         Assert.Throws<InvalidMoveException>(() => 
             game.ExecuteAction("move", _players[0], ToJsonElement(new ActionArgs.MovePawnArgs(invalidMove))));
-        var snapshot = game.GetSnapshot();
+        var snapshot = game.GetSnapshot(_players[0]);
 
         // Assert
         Assert.Equal(ApologiesGame.State.P1Move, snapshot.GameState);
