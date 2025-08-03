@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using BoredGames.Core;
 using BoredGames.Core.Game;
+using BoredGames.Core.Game.Attributes;
 using BoredGames.Games.Apologies.Board;
 using BoredGames.Games.Apologies.Deck;
 using BoredGames.Games.Apologies.Models;
@@ -8,7 +9,9 @@ using JetBrains.Annotations;
 
 namespace BoredGames.Games.Apologies;
 
-public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(players)
+[BoredGame("Apologies")]
+[GamePlayerCount(numPlayers: 4)]
+public sealed class ApologiesGame : GameBase
 {
 
     private readonly CardDeck _cardDeck = new();
@@ -18,9 +21,9 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
     
     private readonly GameStats _stats = new();
         
-    public override bool HasEnded() => GameState == State.End;
+    public override bool HasEnded() => GameState is State.End;
     
-    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]    
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     public enum State
     {
         P1Draw, P1Move,
@@ -47,12 +50,14 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
             PlayerMovesMade[playerIndex]++;
         }
 
-        public GenericComponents.GameStats GetStats()
+        public GenericModels.GameStats GetStats()
         {
             var timeSpan = (_gameEndTimestamp ?? DateTime.Now) - _gameStartTimestamp;
-            return new GenericComponents.GameStats(PlayerMovesMade, PlayerPawnsKilled, (int)timeSpan.TotalSeconds);
+            return new GenericModels.GameStats(PlayerMovesMade, PlayerPawnsKilled, (int)timeSpan.TotalSeconds);
         }
     }
+
+    public ApologiesGame(ApologiesGameConfig _, ImmutableList<Player> players) : base(players) { }
 
     public override ApologiesSnapshot GetSnapshot()
     {
@@ -136,11 +141,8 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
         if (noMoves && isDrawState) {
             nextGameState = (State)(((int)GameState + 2) % 8);
         }
-
-        var gameWon = Array.Exists(_gameBoard.PawnTiles, playerPawnTiles =>
-            Array.TrueForAll(playerPawnTiles, pawnTile => pawnTile is HomeTile)
-        );
-        if (gameWon) {
+        
+        if (_gameBoard.PlayerExistsWithAllPawnsHome) {
             nextGameState = State.End;
         }
         

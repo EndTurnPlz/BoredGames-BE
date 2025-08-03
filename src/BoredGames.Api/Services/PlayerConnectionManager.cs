@@ -47,6 +47,5 @@ public sealed class PlayerConnectionManager : IDisposable
                 RemoveConnection(playerId);
             }
         }
-        
     }
 }

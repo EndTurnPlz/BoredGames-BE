@@ -8,5 +8,5 @@ public static class ActionResponses
     [UsedImplicitly]
     public record DrawCardResponse(
         int CardDrawn,
-        IEnumerable<GenericComponents.Moveset> Movesets) : IGameActionResponse;
+        IEnumerable<GenericModels.Moveset> Movesets) : IGameActionResponse;
 }

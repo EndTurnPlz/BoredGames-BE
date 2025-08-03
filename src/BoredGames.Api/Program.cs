@@ -18,15 +18,17 @@ builder.Services
 
 // Add application services here
 builder.Services
-    .AddGameConfigs()
+    .AddSingleton<GameRegistry>()
     .AddSingleton<RoomManager>()
     .AddHostedService<RoomCleanupService>()
     .AddSingleton<PlayerConnectionManager>();
 
 var app = builder.Build();
 
+// Initialize singleton services at startup
 using (var scope = app.Services.CreateScope())
 {
+    scope.ServiceProvider.GetRequiredService<GameRegistry>();
     scope.ServiceProvider.GetRequiredService<RoomManager>();
     Console.WriteLine("RoomManager initialized.");
 }

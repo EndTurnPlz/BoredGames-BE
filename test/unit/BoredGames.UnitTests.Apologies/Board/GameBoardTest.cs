@@ -31,7 +31,7 @@ public class GameBoardTest
     {
         var moves = _gameBoard.GetValidMovesForPlayer(playerIndex, card);
         Assert.NotNull(moves);
-        Assert.IsType<List<GenericComponents.Moveset>>(moves);
+        Assert.IsType<List<GenericModels.Moveset>>(moves);
     }
 
     [Theory]
@@ -52,8 +52,8 @@ public class GameBoardTest
 
         var split2Effect = GetMoveEffect("Split2");
         var split5Effect = GetMoveEffect("Split5");
-        var firstMove = new GenericComponents.Move("a_1", "a_s1", split2Effect);
-        var secondMove = new GenericComponents.Move("a_3", "a_6", split5Effect);
+        var firstMove = new GenericModels.Move("a_1", "a_s1", split2Effect);
+        var secondMove = new GenericModels.Move("a_3", "a_6", split5Effect);
 
         // Act
         var result = _gameBoard.TryExecuteSplitMove(firstMove, secondMove, 0);
@@ -73,8 +73,8 @@ public class GameBoardTest
         _gameBoard.PawnTiles[0][0] = BoardTileDfs(_gameBoard, "a_1")!;
         _gameBoard.PawnTiles[0][1] = BoardTileDfs(_gameBoard, "a_3")!;
         
-        var firstMove = new GenericComponents.Move("a_1", "a_3", split2Effect);
-        var secondMove = new GenericComponents.Move("a_3", "a_4", split1Effect);
+        var firstMove = new GenericModels.Move("a_1", "a_3", split2Effect);
+        var secondMove = new GenericModels.Move("a_3", "a_4", split1Effect);
         
         var result = _gameBoard.TryExecuteSplitMove(firstMove, secondMove, 0);
         Assert.False(result);
@@ -85,7 +85,7 @@ public class GameBoardTest
     {
         // Arrange
         var moveEffect = GetMoveEffect("Forward");
-        var move = new GenericComponents.Move("a_4", "a_6", moveEffect);
+        var move = new GenericModels.Move("a_4", "a_6", moveEffect);
 
         _gameBoard.PawnTiles[0][0] = BoardTileDfs(_gameBoard, "a_4")!;
 
@@ -102,7 +102,7 @@ public class GameBoardTest
     {
         // Arrange
         var moveEffect = GetMoveEffect("Forward");
-        var move = new GenericComponents.Move("a_4", "a_6", moveEffect);
+        var move = new GenericModels.Move("a_4", "a_6", moveEffect);
 
         // Setup player 0's pawn at a_4
         _gameBoard.PawnTiles[0][0] = BoardTileDfs(_gameBoard, "a_4")!;
@@ -126,7 +126,7 @@ public class GameBoardTest
     public void TryExecuteMovePawn_InvalidMove_ShouldReturnFalse()
     {
         var moveEffect = GetMoveEffect("ExitStart");
-        var move = new GenericComponents.Move("a_4", "a_6", moveEffect);
+        var move = new GenericModels.Move("a_4", "a_6", moveEffect);
         _gameBoard.PawnTiles[0][0] = BoardTileDfs(_gameBoard, "a_6")!;
 
         var result = _gameBoard.TryExecuteMovePawn(move, CardDeck.CardTypes.Two, 0);
@@ -277,7 +277,7 @@ public class GameBoardTest
         var sourceTile = BoardTileDfs(_gameBoard, sourceTileName)!;
         _gameBoard.PawnTiles[0][0] = sourceTile;
         var effect = GetMoveEffect(effectName);
-        var move = new GenericComponents.Move(sourceTileName, destTileName, effect);
+        var move = new GenericModels.Move(sourceTileName, destTileName, effect);
 
         // Act
         var result = GetPrivateMethodResult<BoardTile>(
@@ -300,7 +300,7 @@ public class GameBoardTest
         var sourceTile = BoardTileDfs(_gameBoard, sourceTileName)!;
         _gameBoard.PawnTiles[0][0] = sourceTile;
         var effect = GetMoveEffect(effectName);
-        var move = new GenericComponents.Move(sourceTileName, destTileName, effect);
+        var move = new GenericModels.Move(sourceTileName, destTileName, effect);
 
         // Act & Assert
         var ex = Assert.Throws<TargetInvocationException>(() => GetPrivateMethodResult<BoardTile>(

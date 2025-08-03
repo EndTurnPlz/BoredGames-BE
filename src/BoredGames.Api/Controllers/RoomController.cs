@@ -1,5 +1,4 @@
 using BoredGames.Core;
-using BoredGames.Core.Game;
 using BoredGames.Core.Room;
 using BoredGames.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +7,8 @@ namespace BoredGames.Controllers;
 
 [ApiController]
 [Route("api/room")]
-public class RoomController(RoomManager roomManager, PlayerConnectionManager playerConnectionManager) : ControllerBase
+public class RoomController(RoomManager roomManager, PlayerConnectionManager playerConnectionManager, 
+    GameRegistry gameRegistry) : ControllerBase
 {
 
     [Produces("application/json")]
@@ -16,14 +16,9 @@ public class RoomController(RoomManager roomManager, PlayerConnectionManager pla
     public ActionResult CreateRoom([FromBody] string playerName, [FromQuery] string gameType)
     {
         var player = new Player(playerName);
-        
-        var ok = Enum.TryParse<GameTypes>(gameType, out var resolvedType);
-        if (!ok) {
-            return NotFound("Invalid game type");
-        }
-        
         var playerId = player.Id;
-        var roomId = roomManager.CreateRoom(resolvedType, player);
+
+        var roomId = roomManager.CreateRoom(gameRegistry.ByName[gameType], player);
         return Ok(new { playerId, roomId } );
     }
 
@@ -34,7 +29,8 @@ public class RoomController(RoomManager roomManager, PlayerConnectionManager pla
         var player = new Player(playerName);
         
         try {
-            roomManager.JoinRoom(roomId, player);
+            var room = roomManager.GetRoom(roomId);
+            room.AddPendingPlayer(player);
         } 
         catch (RoomException ex) {
             return BadRequest(ex.Message);

@@ -35,7 +35,7 @@ public class ApologiesGameTest
     public void Constructor_ShouldInitializeGameCorrectly()
     {
         // Arrange & Act
-        var game = new ApologiesGame(_players);
+        var game = new ApologiesGame(new ApologiesGameConfig(), _players);
         var snapshot = game.GetSnapshot();
 
         // Assert
@@ -48,7 +48,7 @@ public class ApologiesGameTest
     public void DrawCard_ShouldThrowInvalidPlayerException_WhenWrongPlayerDraws()
     {
         // Arrange
-        var game = new ApologiesGame(_players);
+        var game = new ApologiesGame(new ApologiesGameConfig(), _players);
 
         // Act & Assert
         Assert.Throws<InvalidPlayerException>(() => 
@@ -59,8 +59,8 @@ public class ApologiesGameTest
     public void MovePawn_ShouldThrowInvalidPlayerException_WhenWrongPlayerMoves()
     {
         // Arrange
-        var game = new ApologiesGame(_players);
-        var move = new GenericComponents.Move("a_1", "a_3", 0);
+        var game = new ApologiesGame(new ApologiesGameConfig(), _players);
+        var move = new GenericModels.Move("a_1", "a_3", 0);
         
         // Act & Assert
         Assert.Throws<InvalidPlayerException>(() =>
@@ -71,7 +71,7 @@ public class ApologiesGameTest
     public void HasEnded_ShouldReturnTrue_WhenGameStateIsEnd()
     {
         // Arrange
-        var game = new ApologiesGame(_players);
+        var game = new ApologiesGame(new ApologiesGameConfig(), _players);
         typeof(ApologiesGame)
             .GetProperty("GameState", BindingFlags.NonPublic | BindingFlags.Instance)
             ?.SetValue(game, ApologiesGame.State.End);
@@ -84,7 +84,7 @@ public class ApologiesGameTest
     public void HasEnded_ShouldReturnFalse_WhenGameStateIsNotEnd()
     {
         // Arrange
-        var game = new ApologiesGame(_players);
+        var game = new ApologiesGame(new ApologiesGameConfig(), _players);
         
         // Act & Assert
         foreach (var state in Enum.GetValues<ApologiesGame.State>()) {
@@ -100,7 +100,7 @@ public class ApologiesGameTest
     public void GetSnapshot_ShouldReturnValidSnapshot()
     {
         // Arrange
-        var game = new ApologiesGame(_players);
+        var game = new ApologiesGame(new ApologiesGameConfig(), _players);
 
         // Act
         var snapshot = game.GetSnapshot();
@@ -132,7 +132,7 @@ public class ApologiesGameTest
         var game = CreateGameWithCards([CardDeck.CardTypes.One]);
         var res = (game.ExecuteAction("draw", _players[0]) as ActionResponses.DrawCardResponse)!;
         var moveOpt = res.Movesets.ElementAt(0).Opts.ElementAt(0);
-        var move = new GenericComponents.Move(moveOpt.From, moveOpt.To, moveOpt.Effects.First());
+        var move = new GenericModels.Move(moveOpt.From, moveOpt.To, moveOpt.Effects.First());
 
         // Act
         game.ExecuteAction("move", _players[0], ToJsonElement(new ActionArgs.MovePawnArgs(move)));
@@ -160,7 +160,7 @@ public class ApologiesGameTest
 
         // Act
         game.ExecuteAction("draw", _players[0]);
-        var move = new GenericComponents.Move("a_s5", "a_H", 0);
+        var move = new GenericModels.Move("a_s5", "a_H", 0);
         game.ExecuteAction("move", _players[0], ToJsonElement(new ActionArgs.MovePawnArgs(move)));
         var snapshot = game.GetSnapshot();
 
@@ -180,7 +180,7 @@ public class ApologiesGameTest
         gameBoard.PawnTiles[0][0] = GameBoardTest.BoardTileDfs(gameBoard, "a_10")!;
         
         game.ExecuteAction("draw", _players[0]);
-        var firstMove = new GenericComponents.Move("a_10", "a_12", 0);
+        var firstMove = new GenericModels.Move("a_10", "a_12", 0);
 
         // Act
         game.ExecuteAction("move", _players[0], ToJsonElement(new ActionArgs.MovePawnArgs(firstMove)));
@@ -199,7 +199,7 @@ public class ApologiesGameTest
             .GetProperty("GameState", BindingFlags.NonPublic | BindingFlags.Instance)
             ?.SetValue(game, ApologiesGame.State.P1Draw);
         game.ExecuteAction("draw", _players[0]);
-        var invalidMove = new GenericComponents.Move("invalid", "invalid", 0);
+        var invalidMove = new GenericModels.Move("invalid", "invalid", 0);
         
         // Act
         Assert.Throws<InvalidMoveException>(() => 
@@ -212,7 +212,7 @@ public class ApologiesGameTest
     
     private ApologiesGame CreateGameWithCards(IEnumerable<CardDeck.CardTypes> cards)
     {
-        var game = new ApologiesGame(_players);
+        var game = new ApologiesGame(new ApologiesGameConfig(), _players);
         var cardDeck = new CardDeck();
         typeof(CardDeck).GetField("_cards", BindingFlags.NonPublic | BindingFlags.Instance)
             ?.SetValue(cardDeck, new List<CardDeck.CardTypes>(cards));

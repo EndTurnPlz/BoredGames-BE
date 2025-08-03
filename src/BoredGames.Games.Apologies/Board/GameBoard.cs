@@ -46,9 +46,9 @@ public class GameBoard
         ];
     }
 
-    public List<GenericComponents.Moveset> GetValidMovesForPlayer(int playerIndex, CardDeck.CardTypes card)
+    public List<GenericModels.Moveset> GetValidMovesForPlayer(int playerIndex, CardDeck.CardTypes card)
     {
-        List<GenericComponents.Moveset> movesets = [];
+        List<GenericModels.Moveset> movesets = [];
         var checkedStartWlog = false;
         for (var p = 0; p < 4; p++)
         {
@@ -89,17 +89,17 @@ public class GameBoard
             var moveList = validTiles
                 .GroupBy(x => x.Item1)
                 .Select(x =>
-                    new GenericComponents.MoveOpts(currentPawnTile.Name, x.Key.Name, x.Select(y => (int)y.Item2)))
+                    new GenericModels.MoveOpts(currentPawnTile.Name, x.Key.Name, x.Select(y => (int)y.Item2)))
                 .ToImmutableList();
 
             if (moveList.Count == 0) continue;
-            movesets.Add(new GenericComponents.Moveset(currentPawnTile.Name, moveList));
+            movesets.Add(new GenericModels.Moveset(currentPawnTile.Name, moveList));
         }
 
         return movesets;
     }
 
-    public bool TryExecuteSplitMove(GenericComponents.Move firstMove, GenericComponents.Move secondMove, int playerIndex)
+    public bool TryExecuteSplitMove(GenericModels.Move firstMove, GenericModels.Move secondMove, int playerIndex)
     {
         var firstMoveEffect = (MoveEffect)firstMove.Effect;
         var secondMoveEffect = (MoveEffect)secondMove.Effect;
@@ -161,7 +161,7 @@ public class GameBoard
         return true;
     }
 
-    public bool TryExecuteMovePawn(GenericComponents.Move move, CardDeck.CardTypes drawnCard, int playerIndex)
+    public bool TryExecuteMovePawn(GenericModels.Move move, CardDeck.CardTypes drawnCard, int playerIndex)
     {
         var isSwap = (MoveEffect)move.Effect == MoveEffect.Swap;
         
@@ -215,7 +215,7 @@ public class GameBoard
         }
     }
 
-    private BoardTile ValidateAndFindDestinationTile(BoardTile sourceTile, GenericComponents.Move move, 
+    private BoardTile ValidateAndFindDestinationTile(BoardTile sourceTile, GenericModels.Move move, 
         CardDeck.CardTypes drawnCard, int playerIndex)
     {
         // Using the correct effect check if the end tile exists
@@ -371,6 +371,11 @@ public class GameBoard
         if (tile is not WalkableTile) return true;
         return !Array.Exists(PawnTiles[playerIndex], x => x.Name == tile.Name);
     }
+    
+    [Pure]
+    public bool PlayerExistsWithAllPawnsHome => Array.Exists(PawnTiles, playerPawnTiles =>
+                                                    Array.TrueForAll(playerPawnTiles, pawnTile => 
+                                                        pawnTile is HomeTile));
 
     // Helper that builds the game board
     private void BuildGameBoard()
