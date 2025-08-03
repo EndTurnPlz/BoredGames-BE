@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Collections.Frozen;
 using System.Diagnostics.Contracts;
 using BoredGames.Core;
 using BoredGames.Core.Game;
@@ -7,34 +6,25 @@ using BoredGames.Core.Room;
 
 namespace BoredGames.Services;
 
-public sealed class RoomManager : IDisposable
+public sealed class RoomManager(PlayerConnectionManager playerConnectionManager, 
+    ILogger<RoomManager> logger) : IDisposable
 {
     private readonly ConcurrentDictionary<Guid, GameRoom> _rooms = new();
-    private readonly FrozenDictionary<string, IGameConfig> _configs;
     private readonly CancellationTokenSource _tickerCts = new();
     
     private readonly TimeSpan _abandonedRoomTimeout = TimeSpan.FromMinutes(5);
-    private readonly PlayerConnectionManager _playerConnectionManager;
-    private readonly ILogger<RoomManager> _logger;
-    
-    public RoomManager(IEnumerable<IGameConfig> gameConfigs, PlayerConnectionManager playerConnectionManager,
-        ILogger<RoomManager> logger) 
-    {
-        _configs = gameConfigs.ToFrozenDictionary(c => c.GetGameName(), c => c);
-        _playerConnectionManager = playerConnectionManager;
-        _logger = logger;
-    }
-    
+    private readonly TimeSpan _idleGameTimeout = TimeSpan.FromMinutes(15);
+
     private async void OnRoomChanged(object? sender, EventArgs e)
     {
         try {
             if (sender is not GameRoom) throw new ArgumentNullException(nameof(sender));
             if (e is not RoomChangedEventArgs args) throw new InvalidDataException("Invalid event args type");
         
-            await _playerConnectionManager.PushSnapshotToPlayersAsync(args.PlayerIds, args.Snapshot); 
+            await playerConnectionManager.PushSnapshotToPlayersAsync(args.PlayerIds, args.Snapshot); 
         }
         catch (Exception ex) {
-            _logger.LogError(ex, "Could not push room snapshot to players"); 
+            logger.LogError(ex, "Could not push room snapshot to players"); 
         }
     }
     
@@ -46,13 +36,15 @@ public sealed class RoomManager : IDisposable
 
     public void CleanupStaleResources()
     {
-        CleanupDeadRooms(_abandonedRoomTimeout);
+        CleanupDeadRooms();
         CleanupExpiredPlayers();
     }
 
-    private void CleanupDeadRooms(TimeSpan abandonedRoomTimeout)
+    private void CleanupDeadRooms()
     {
-        var deadRoomIds = _rooms.Where(pair => pair.Value.IsDead(abandonedRoomTimeout)).Select(pair => pair.Key);
+        var deadRoomIds = _rooms
+            .Where(pair => pair.Value.IsDead(_abandonedRoomTimeout, _idleGameTimeout))
+            .Select(pair => pair.Key);
 
         foreach (var id in deadRoomIds)
         {
@@ -72,20 +64,14 @@ public sealed class RoomManager : IDisposable
         }
     }
 
-    public Guid CreateRoom(string gameType, Player host)
+    public Guid CreateRoom(GameRegistry.GameInfoEntry gameInfo, Player host)
     {
-        if (!_configs.TryGetValue(gameType, out var config)) throw new CreateRoomFailedException();
-        
-        var room = new GameRoom(host, config);
+        var config = (IGameConfig)Activator.CreateInstance(gameInfo.ConfigType)!;
+        var room = new GameRoom(config, gameInfo.Constructor, gameInfo.MinPlayers, gameInfo.MaxPlayers, host);
         if (!_rooms.TryAdd(room.Id, room)) throw new CreateRoomFailedException();
         
         room.RoomChanged += OnRoomChanged;
         return room.Id;
-    }
-    
-    public void JoinRoom(Guid roomId, Player player)
-    {
-        GetRoom(roomId).AddPendingPlayer(player);
     }
     
     [Pure]

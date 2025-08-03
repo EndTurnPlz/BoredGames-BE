@@ -10,7 +10,8 @@ using JetBrains.Annotations;
 namespace BoredGames.Games.Apologies;
 
 [BoredGame("Apologies")]
-public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(players)
+[GamePlayerCount(numPlayers: 4)]
+public sealed class ApologiesGame : GameBase
 {
 
     private readonly CardDeck _cardDeck = new();
@@ -22,7 +23,7 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
         
     public override bool HasEnded() => GameState is State.End;
     
-    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]    
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     public enum State
     {
         P1Draw, P1Move,
@@ -55,6 +56,8 @@ public sealed class ApologiesGame(ImmutableList<Player> players) : GameBase(play
             return new GenericModels.GameStats(PlayerMovesMade, PlayerPawnsKilled, (int)timeSpan.TotalSeconds);
         }
     }
+
+    public ApologiesGame(ApologiesGameConfig _, ImmutableList<Player> players) : base(players) { }
 
     public override ApologiesSnapshot GetSnapshot()
     {

@@ -66,9 +66,3 @@ public abstract class GameBase
         return actionMap.ToFrozenDictionary();
     }
 }
-
-public interface IGameSnapshot;
-
-public interface IGameActionArgs;
-
-public interface IGameActionResponse;

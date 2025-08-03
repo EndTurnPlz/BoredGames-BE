@@ -10,11 +10,10 @@ using JetBrains.Annotations;
 namespace BoredGames.Games.UpsAndDowns;
 
 [BoredGame("UpsAndDowns")]
-public class UpsAndDownsGame(ImmutableList<Player> playerList) : GameBase(playerList)
-{
+[GamePlayerCount(minPlayers: 2, maxPlayers: 8)]
+public class UpsAndDownsGame : GameBase {
     private readonly StandardDie _die = new();
-
-    private readonly GameBoard _gameBoard = GameBoard.CreateWithDefaultWarpTiles(playerList.Count);
+    private readonly GameBoard _gameBoard;
 
     [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     public enum State
@@ -24,6 +23,11 @@ public class UpsAndDownsGame(ImmutableList<Player> playerList) : GameBase(player
         P5Turn, P6Turn,
         P7Turn, P8Turn,
         End
+    }
+
+    public UpsAndDownsGame(UpsAndDownsGameConfig _, ImmutableList<Player> playerList) : base(playerList)
+    {
+        _gameBoard = GameBoard.CreateWithDefaultWarpTiles(playerList.Count);
     }
     
     private State GameState { get; set; } = State.P1Turn;

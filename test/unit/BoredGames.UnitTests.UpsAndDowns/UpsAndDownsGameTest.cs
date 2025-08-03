@@ -33,7 +33,7 @@ public class UpsAndDownsGameTests
         
         var allPlayers = new[] { _player1, _player2, _player3 };
         var players = allPlayers.Take(playerCount).ToImmutableList();
-        var game = new UpsAndDownsGame(players);
+        var game = new UpsAndDownsGame(new UpsAndDownsGameConfig(), players);
         
         return (game, players);
     }

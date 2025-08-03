@@ -1,7 +1,10 @@
+using JetBrains.Annotations;
+
 namespace BoredGames.Services;
 
-public sealed class RoomCleanupService(ILogger<RoomCleanupService> logger, RoomManager roomManager)
-    : IHostedService, IDisposable
+[UsedImplicitly]
+public sealed class RoomCleanupService(ILogger<RoomCleanupService> logger, 
+                                       RoomManager roomManager) : IHostedService, IDisposable
 {
     private Timer? _timer;
 
