@@ -4,7 +4,6 @@ Added the ability to directly purchase an item without needing to use the cart.
 
 --------------------------------------------------------
 
-
 ### Related Issues 🔗
 <!-- E.g., Closes #123 (You can link multiple issues, e.g., Closes #123, Fixes #456) -->
 - REQUIRED: Replace this line with any related issue(s).
