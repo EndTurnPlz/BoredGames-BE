@@ -11,9 +11,11 @@ namespace BoredGames.Games.UpsAndDowns;
 
 [BoredGame("UpsAndDowns")]
 [GamePlayerCount(minPlayers: 2, maxPlayers: 8)]
-public class UpsAndDownsGame : GameBase {
+public class UpsAndDownsGame(UpsAndDownsGameConfig config, ImmutableList<Player> playerList)
+    : GameBase(config, playerList)
+{
     private readonly StandardDie _die = new();
-    private readonly GameBoard _gameBoard;
+    private readonly GameBoard _gameBoard = GameBoard.CreateWithDefaultWarpTiles(playerList.Count);
 
     [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     public enum State
@@ -25,11 +27,6 @@ public class UpsAndDownsGame : GameBase {
         End
     }
 
-    public UpsAndDownsGame(UpsAndDownsGameConfig _, ImmutableList<Player> playerList) : base(playerList)
-    {
-        _gameBoard = GameBoard.CreateWithDefaultWarpTiles(playerList.Count);
-    }
-    
     private State GameState { get; set; } = State.P1Turn;
 
     public override bool HasEnded() => GameState is State.End;

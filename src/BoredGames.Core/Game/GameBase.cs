@@ -19,9 +19,19 @@ public abstract class GameBase
     protected readonly ImmutableList<Player> Players;
     protected int ViewNum { get; set; }
 
-    protected GameBase(ImmutableList<Player> players)
+    protected GameBase(IGameConfig config, ImmutableList<Player> players)
     {
-        Players = players;
+        List<Player> scrambledPlayers = [..players];
+        
+        if (config.ShuffleTurnOrder) {
+            var r = new Random();
+            for (var n = scrambledPlayers.Count - 1; n > 0; --n) {
+                var k = r.Next(n + 1);
+                (scrambledPlayers[n], scrambledPlayers[k]) = (scrambledPlayers[k], scrambledPlayers[n]);
+            }
+        }
+        
+        Players = scrambledPlayers.ToImmutableList();
         ActionMap = DiscoverActions();
     }
 

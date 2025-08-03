@@ -35,7 +35,8 @@ public class ApologiesGameTest
     public void Constructor_ShouldInitializeGameCorrectly()
     {
         // Arrange & Act
-        var game = new ApologiesGame(new ApologiesGameConfig(), _players);
+        var config = new ApologiesGameConfig { ShuffleTurnOrder = false };
+        var game = new ApologiesGame(config, _players);
         var snapshot = game.GetSnapshot(_players[0]);
 
         // Assert
@@ -48,7 +49,8 @@ public class ApologiesGameTest
     public void DrawCard_ShouldThrowInvalidPlayerException_WhenWrongPlayerDraws()
     {
         // Arrange
-        var game = new ApologiesGame(new ApologiesGameConfig(), _players);
+        var config = new ApologiesGameConfig { ShuffleTurnOrder = false };
+        var game = new ApologiesGame(config, _players);
 
         // Act & Assert
         Assert.Throws<InvalidPlayerException>(() => 
@@ -59,7 +61,8 @@ public class ApologiesGameTest
     public void MovePawn_ShouldThrowInvalidPlayerException_WhenWrongPlayerMoves()
     {
         // Arrange
-        var game = new ApologiesGame(new ApologiesGameConfig(), _players);
+        var config = new ApologiesGameConfig { ShuffleTurnOrder = false };
+        var game = new ApologiesGame(config, _players);
         var move = new GenericModels.Move("a_1", "a_3", 0);
         
         // Act & Assert
@@ -71,7 +74,8 @@ public class ApologiesGameTest
     public void HasEnded_ShouldReturnTrue_WhenGameStateIsEnd()
     {
         // Arrange
-        var game = new ApologiesGame(new ApologiesGameConfig(), _players);
+        var config = new ApologiesGameConfig { ShuffleTurnOrder = false };
+        var game = new ApologiesGame(config, _players);
         typeof(ApologiesGame)
             .GetProperty("GameState", BindingFlags.NonPublic | BindingFlags.Instance)
             ?.SetValue(game, ApologiesGame.State.End);
@@ -84,7 +88,8 @@ public class ApologiesGameTest
     public void HasEnded_ShouldReturnFalse_WhenGameStateIsNotEnd()
     {
         // Arrange
-        var game = new ApologiesGame(new ApologiesGameConfig(), _players);
+        var config = new ApologiesGameConfig { ShuffleTurnOrder = false };
+        var game = new ApologiesGame(config, _players);
         
         // Act & Assert
         foreach (var state in Enum.GetValues<ApologiesGame.State>()) {
@@ -100,8 +105,9 @@ public class ApologiesGameTest
     public void GetSnapshot_ShouldReturnValidSnapshot()
     {
         // Arrange
-        var game = new ApologiesGame(new ApologiesGameConfig(), _players);
-
+        var config = new ApologiesGameConfig { ShuffleTurnOrder = false };
+        var game = new ApologiesGame(config, _players);
+        
         // Act
         var snapshot = game.GetSnapshot(_players[0]);
 
@@ -213,7 +219,8 @@ public class ApologiesGameTest
     
     private ApologiesGame CreateGameWithCards(IEnumerable<CardDeck.CardTypes> cards)
     {
-        var game = new ApologiesGame(new ApologiesGameConfig(), _players);
+        var config = new ApologiesGameConfig { ShuffleTurnOrder = false };
+        var game = new ApologiesGame(config, _players);
         var cardDeck = new CardDeck();
         typeof(CardDeck).GetField("_cards", BindingFlags.NonPublic | BindingFlags.Instance)
             ?.SetValue(cardDeck, new List<CardDeck.CardTypes>(cards));

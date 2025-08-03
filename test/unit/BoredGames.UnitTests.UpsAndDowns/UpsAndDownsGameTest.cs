@@ -33,7 +33,8 @@ public class UpsAndDownsGameTests
         
         var allPlayers = new[] { _player1, _player2, _player3 };
         var players = allPlayers.Take(playerCount).ToImmutableList();
-        var game = new UpsAndDownsGame(new UpsAndDownsGameConfig(), players);
+        var config = new UpsAndDownsGameConfig { ShuffleTurnOrder = false };
+        var game = new UpsAndDownsGame(config, players);
         
         return (game, players);
     }

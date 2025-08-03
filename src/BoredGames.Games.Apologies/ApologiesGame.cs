@@ -11,7 +11,7 @@ namespace BoredGames.Games.Apologies;
 
 [BoredGame("Apologies")]
 [GamePlayerCount(numPlayers: 4)]
-public sealed class ApologiesGame : GameBase
+public sealed class ApologiesGame(ApologiesGameConfig config, ImmutableList<Player> players) : GameBase(config, players)
 {
 
     private readonly CardDeck _cardDeck = new();
@@ -57,8 +57,6 @@ public sealed class ApologiesGame : GameBase
             return new GenericModels.GameStats(PlayerMovesMade, PlayerPawnsKilled, (int)timeSpan.TotalSeconds);
         }
     }
-
-    public ApologiesGame(ApologiesGameConfig _, ImmutableList<Player> players) : base(players) { }
 
     public override ApologiesSnapshot GetSnapshot(Player player)
     {

@@ -10,4 +10,8 @@ public interface IGameSnapshot
 
 public interface IGameActionArgs;
 public interface IGameActionResponse;
-public interface IGameConfig;
+
+public interface IGameConfig
+{
+    public bool ShuffleTurnOrder { get; init; }
+};
