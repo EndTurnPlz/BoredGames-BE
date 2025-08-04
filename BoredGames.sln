@@ -19,6 +19,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoredGames.Games.UpsAndDown
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoredGames.UnitTests.UpsAndDowns", "test\unit\BoredGames.UnitTests.UpsAndDowns\BoredGames.UnitTests.UpsAndDowns.csproj", "{D0C9AFB9-ACA7-4F35-96FF-24FB3BD3CDFC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoredGames.Games.Warlocks", "src\BoredGames.Games.Warlocks\BoredGames.Games.Warlocks.csproj", "{779EE6FA-EBBF-4752-86DE-78EC6FE96B66}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoredGames.Common", "src\BoredGames.Common\BoredGames.Common.csproj", "{CDBA8145-82FC-4AF1-84EA-428C33F984B1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -49,11 +53,20 @@ Global
 		{D0C9AFB9-ACA7-4F35-96FF-24FB3BD3CDFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0C9AFB9-ACA7-4F35-96FF-24FB3BD3CDFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0C9AFB9-ACA7-4F35-96FF-24FB3BD3CDFC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{779EE6FA-EBBF-4752-86DE-78EC6FE96B66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{779EE6FA-EBBF-4752-86DE-78EC6FE96B66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{779EE6FA-EBBF-4752-86DE-78EC6FE96B66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{779EE6FA-EBBF-4752-86DE-78EC6FE96B66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CDBA8145-82FC-4AF1-84EA-428C33F984B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CDBA8145-82FC-4AF1-84EA-428C33F984B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CDBA8145-82FC-4AF1-84EA-428C33F984B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CDBA8145-82FC-4AF1-84EA-428C33F984B1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{564F57B0-21E8-48F6-88C6-B92D172F65B3} = {215E13D5-F254-4CFF-AAB7-D708F2EE7326}
 		{BE256B40-7B62-4AFF-850C-1F76E3BDE8DC} = {F5540FA6-7FEE-4409-A569-DDB90134837A}
 		{682F2632-3715-40FE-874B-18D5494F6B00} = {215E13D5-F254-4CFF-AAB7-D708F2EE7326}
 		{D0C9AFB9-ACA7-4F35-96FF-24FB3BD3CDFC} = {F5540FA6-7FEE-4409-A569-DDB90134837A}
+		{779EE6FA-EBBF-4752-86DE-78EC6FE96B66} = {215E13D5-F254-4CFF-AAB7-D708F2EE7326}
 	EndGlobalSection
 EndGlobal
