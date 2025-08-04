@@ -11,13 +11,14 @@ namespace BoredGames.Games.Apologies;
 
 [BoredGame("Apologies")]
 [GamePlayerCount(numPlayers: 4)]
-public sealed class ApologiesGame : GameBase
+public sealed class ApologiesGame(ApologiesGameConfig config, ImmutableList<Player> players) : GameBase(config, players)
 {
 
     private readonly CardDeck _cardDeck = new();
     private readonly GameBoard _gameBoard = new();
     private State GameState { get; set; } = State.P1Draw;
     private ActionArgs.MovePawnArgs? _lastCompletedMove;
+    private List<GenericModels.Moveset>? _currentMoveset;
     
     private readonly GameStats _stats = new();
         
@@ -57,31 +58,37 @@ public sealed class ApologiesGame : GameBase
         }
     }
 
-    public ApologiesGame(ApologiesGameConfig _, ImmutableList<Player> players) : base(players) { }
-
-    public override ApologiesSnapshot GetSnapshot()
+    public override ApologiesSnapshot GetSnapshot(Player player)
     {
+        var playerIndex = Players.IndexOf(player);
+        var isPlayerMoveTurn = playerIndex * 2 + 1 == (int)GameState;
         var turnOrder = Players.Select(p => p.Username).ToArray();
         var pieces = _gameBoard.PawnTiles.Select(playerTiles => playerTiles.Select(pawnTiles => pawnTiles.Name));
-        
-        return new ApologiesSnapshot(GameState, _cardDeck.LastDrawn, _lastCompletedMove, 
-            _stats.GetStats(), turnOrder, pieces);
+
+        return new ApologiesSnapshot
+        {
+            GameState = GameState,
+            LastDrawnCard = _cardDeck.LastDrawn,
+            LastCompletedMove = _lastCompletedMove,
+            GameStats = _stats.GetStats(),
+            TurnOrder = turnOrder,
+            Pieces = pieces,
+            CurrentMoveset = isPlayerMoveTurn ? _currentMoveset : null
+        };
     }
 
     [GameAction("draw")]
-    private ActionResponses.DrawCardResponse DrawCardAction(Player player)
+    private void DrawCardAction(Player player)
     {
         var playerIndex = Players.IndexOf(player);
         var isCorrectPlayerDrawing = playerIndex * 2 == (int)GameState; 
         if (!isCorrectPlayerDrawing) throw new InvalidPlayerException();
         
         var lastDrawn = _cardDeck.DrawCard();
-        var validMoves = _gameBoard.GetValidMovesForPlayer(Players.IndexOf(player), lastDrawn);
+        _currentMoveset = _gameBoard.GetValidMovesForPlayer(Players.IndexOf(player), lastDrawn);
         
-        AdvanceGamePhase(validMoves.Count == 0);
+        AdvanceGamePhase();
         ViewNum++;
-        
-        return new ActionResponses.DrawCardResponse((int)lastDrawn, validMoves);
     }
 
     [GameAction("move")]
@@ -124,7 +131,7 @@ public sealed class ApologiesGame : GameBase
         ViewNum++;
     }
 
-    private void AdvanceGamePhase(bool noMoves = false)
+    private void AdvanceGamePhase()
     {
         if (GameState is State.End) return;
 
@@ -138,7 +145,8 @@ public sealed class ApologiesGame : GameBase
             nextGameState = (State)(((int)GameState - 1) % 8);
         }
 
-        if (noMoves && isDrawState) {
+        var noMoves = _currentMoveset?.Count == 0;
+        if (isDrawState && noMoves) {
             nextGameState = (State)(((int)GameState + 2) % 8);
         }
         

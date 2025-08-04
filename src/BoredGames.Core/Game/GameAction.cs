@@ -3,40 +3,42 @@ using System.Reflection;
 
 namespace BoredGames.Core.Game;
 
+using GameActionDelegate = Action<GameBase, Player, IGameActionArgs?>;
+
 public class GameAction
 {
-    private readonly Func<GameBase, Player, IGameActionArgs?, IGameActionResponse?> _action;
+    private readonly GameActionDelegate _action;
     public readonly Type? ArgsType;
     
-    // --- Private Constructor ---
-    private GameAction(Func<GameBase, Player, IGameActionArgs?, IGameActionResponse?> action, Type? argsType)
+    // Private Constructor
+    private GameAction(GameActionDelegate action, Type? argsType)
     {
         _action = action;
         ArgsType = argsType;
     }
     
-    // --- Public factory method ---
+    // Public factory method
     public static GameAction Create(MethodInfo method, GameBase gameInstance)
     {
         var gameType = gameInstance.GetType();
         var parameters = method.GetParameters();
-        if (parameters.Length > 2) throw new ArgumentException("Game actions must have at most two parameters.");
+        if (parameters.Length is > 2 or 0) throw new ArgumentException("Game actions must have 1-2 parameters.");
 
         // Discover signature
+        if (parameters[0].ParameterType != typeof(Player)) {
+            throw new ArgumentException("A game action requires a player object be passed as the first parameter. ");
+        }
         var argsParamInfo = parameters.SingleOrDefault(p => typeof(IGameActionArgs).IsAssignableFrom(p.ParameterType));
         var argsType = argsParamInfo?.ParameterType;
-        if (parameters[0] is null)
-            throw new ArgumentException("A game action requires that a player object be passed as the first parameter. ");
 
         // Define expression parameters for the final delegate
         var gameInstanceParam = Expression.Parameter(typeof(GameBase), "game");
         var playerParam = Expression.Parameter(typeof(Player), "player");
         var argsParam = Expression.Parameter(typeof(IGameActionArgs), "args");
 
-        // Create expressions to cast the generic parameters to the specific types needed by the method
-        var castGameInstance = Expression.Convert(gameInstanceParam, gameType);
         
         // Build the list of arguments for the final method call
+        var castGameInstance = Expression.Convert(gameInstanceParam, gameType);
         List<Expression> methodCallArgs = [playerParam];
         if (argsType != null) {
             var castArgs = Expression.Convert(argsParam, argsType);
@@ -45,31 +47,38 @@ public class GameAction
 
         var methodCall = Expression.Call(castGameInstance, method, methodCallArgs);
 
-        // Ensure the return type is correctly handled (void vs. returning a response)
-        Expression finalBody = method.ReturnType == typeof(void)
-            ? Expression.Block(methodCall, Expression.Constant(null, typeof(IGameActionResponse)))
-            : Expression.Convert(methodCall, typeof(IGameActionResponse));
-
-        var lambda = Expression.Lambda<Func<GameBase, Player, IGameActionArgs?, IGameActionResponse?>>(
-            finalBody,
+        // Compile the tree into a highly optimized delegate.
+        var actionDelegate = Expression.Lambda<GameActionDelegate>(
+            methodCall,
             gameInstanceParam,
             playerParam,
             argsParam
-        );
-
-        // Compile the tree into a highly optimized delegate.
-        var compiledDelegate = lambda.Compile();
-
-        return new GameAction(compiledDelegate, argsType);
+        ).Compile();
+        
+        return new GameAction(actionDelegate, argsType);
     }
         
-    public IGameActionResponse? Execute(GameBase gameInstance, Player player, IGameActionArgs? args = null)
+    public void Execute(GameBase gameInstance, Player player, IGameActionArgs? args = null)
     {
-        if (!ArgsType?.IsInstanceOfType(args) ?? args is not null)
-            throw new ArgumentException($"Invalid argument type provided. " + 
-                                        $"Expected: {ArgsType?.Name ?? "null"}, " +
-                                        $"Actual: {args?.GetType().Name ?? "null"}.");
+        //Action expects no args, but args were given.
+        if (ArgsType == null && args != null)
+        {
+            throw new ArgumentException("This action does not accept arguments.");
+        }
+
+        //Action expects args, but none were given.
+        if (ArgsType != null && args == null)
+        {
+            throw new ArgumentException($"Action requires arguments of type '{ArgsType.Name}'.");
+        }
+
+        //Action expects args, but the wrong type was given.
+        if (ArgsType != null && !ArgsType.IsInstanceOfType(args))
+        {
+            throw new ArgumentException($"Invalid argument type. Expected '{ArgsType.Name}' " +
+                                        $"but received '{args!.GetType().Name}'.");
+        }
         
-        return _action(gameInstance, player, args);
+        _action(gameInstance, player, args);
     }
 }

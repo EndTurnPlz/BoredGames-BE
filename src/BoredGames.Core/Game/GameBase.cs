@@ -19,16 +19,26 @@ public abstract class GameBase
     protected readonly ImmutableList<Player> Players;
     protected int ViewNum { get; set; }
 
-    protected GameBase(ImmutableList<Player> players)
+    protected GameBase(IGameConfig config, ImmutableList<Player> players)
     {
-        Players = players;
+        List<Player> scrambledPlayers = [..players];
+        
+        if (config.ShuffleTurnOrder) {
+            var r = new Random();
+            for (var n = scrambledPlayers.Count - 1; n > 0; --n) {
+                var k = r.Next(n + 1);
+                (scrambledPlayers[n], scrambledPlayers[k]) = (scrambledPlayers[k], scrambledPlayers[n]);
+            }
+        }
+        
+        Players = scrambledPlayers.ToImmutableList();
         ActionMap = DiscoverActions();
     }
 
-    public abstract IGameSnapshot GetSnapshot();
+    public abstract IGameSnapshot GetSnapshot(Player player);
     public abstract bool HasEnded();
 
-    public IGameActionResponse? ExecuteAction(string actionName, Player player, JsonElement? rawArgs = null)
+    public void ExecuteAction(string actionName, Player player, JsonElement? rawArgs = null)
     {
         if (HasEnded()) throw new InvalidOperationException("Game has ended.");
         
@@ -36,15 +46,16 @@ public abstract class GameBase
 
         if (action.ArgsType is null) {
             if (rawArgs is not null) throw new BadActionArgsGameException();
-            return action.Execute(this, player);
+            action.Execute(this, player);
+            return;
         }
         
         if (rawArgs is not {} args) throw new BadActionArgsGameException();
 
-        var resolvedArgs = args.Deserialize(action.ArgsType, Options) as IGameActionArgs 
+        var resolvedArgs = args.Deserialize(action.ArgsType!, Options) as IGameActionArgs 
                            ?? throw new BadActionArgsGameException();
         
-        return action.Execute(this, player, resolvedArgs);
+        action.Execute(this, player, resolvedArgs);
     }
 
     private FrozenDictionary<string, GameAction> DiscoverActions()
@@ -58,7 +69,6 @@ public abstract class GameBase
 
         foreach (var method in actionMethods)
         {
-            // Throw new NotSupportedException("This method signature is not supported.");
             var actionName = method.GetCustomAttribute<GameActionAttribute>()!.Name;
             actionMap.Add(actionName, GameAction.Create(method, this));
         }

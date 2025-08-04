@@ -46,9 +46,9 @@ public class GameRoom
             throw new SynchronizationLockException("Current thread does not hold the room lock");
         }
         ViewNum++;
-        var snapshot = GetSnapshot();
         var playerIds = _players.Select(p => p.Id);
-        RoomChanged?.Invoke(this, new RoomChangedEventArgs(playerIds, snapshot));
+        var snapshots = _players.Select(GetSnapshot);
+        RoomChanged?.Invoke(this, new RoomChangedEventArgs(playerIds, snapshots));
     }
     
     public GameRoom(IGameConfig gameConfig, GameConstructor gameConstructor, int minPlayers, int maxPlayers, Player host)
@@ -152,27 +152,26 @@ public class GameRoom
         }
     } 
 
-    public IGameActionResponse? ExecuteGameAction(string actionName, Guid playerId, JsonElement? args)
+    public void ExecuteGameAction(string actionName, Guid playerId, JsonElement? args)
     {
         lock (_lock) {
             if (RoomState is State.WaitingForPlayers) throw new RoomNotStartedException();
             
             var player = _players.SingleOrDefault(p => p.Id == playerId) ?? throw new PlayerNotFoundException();
             if (!player.IsConnected) throw new PlayerNotConnectedException();
-            var result = _game!.ExecuteAction(actionName, player, args);
+            _game!.ExecuteAction(actionName, player, args);
             if (_game!.HasEnded()) RoomState = State.GameEnded;
             LastIdleAt = DateTime.Now;
             EmitRoomChangedEvent();
-            return result;
         }
     }
 
-    private RoomSnapshot GetSnapshot()
+    private RoomSnapshot GetSnapshot(Player player)
     {
         lock (_lock) {
             var playerNames = _players.Select(p => p.Username);
             var playerConnStatus = _players.Select(p => p.IsConnected);
-            return new RoomSnapshot(ViewNum, RoomState, playerNames, playerConnStatus, _game?.GetSnapshot());
+            return new RoomSnapshot(ViewNum, RoomState, playerNames, playerConnStatus, _game?.GetSnapshot(player));
         }
     }
 
