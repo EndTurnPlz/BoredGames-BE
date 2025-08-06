@@ -11,6 +11,7 @@ public interface IGameSnapshot
 public interface IGameActionArgs;
 public interface IGameActionResponse;
 
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers | ImplicitUseTargetFlags.WithInheritors)]
 public interface IGameConfig
 {
     public bool ShuffleTurnOrder { get; init; }

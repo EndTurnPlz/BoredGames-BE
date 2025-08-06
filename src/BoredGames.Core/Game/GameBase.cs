@@ -45,15 +45,15 @@ public abstract class GameBase
         var action = ActionMap.GetValueOrDefault(actionName) ?? throw new InvalidActionException();
 
         if (action.ArgsType is null) {
-            if (rawArgs is not null) throw new BadActionArgsGameException();
+            if (rawArgs is not null) throw new BadActionArgsException();
             action.Execute(this, player);
             return;
         }
         
-        if (rawArgs is not {} args) throw new BadActionArgsGameException();
+        if (rawArgs is not {} args) throw new BadActionArgsException();
 
         var resolvedArgs = args.Deserialize(action.ArgsType!, Options) as IGameActionArgs 
-                           ?? throw new BadActionArgsGameException();
+                           ?? throw new BadActionArgsException();
         
         action.Execute(this, player, resolvedArgs);
     }
