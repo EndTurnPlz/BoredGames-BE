@@ -104,7 +104,7 @@ public sealed class ApologiesGame(ApologiesGameConfig config, ImmutableList<Play
         
         // make sure SplitMove is set only if the last drawn card is a 7
         if (req.SplitMove is { } splitMove) {
-            if (_cardDeck.LastDrawn != CardDeck.CardTypes.Seven ||
+            if (_cardDeck.LastDrawn != CardDeck.Card.Seven ||
                 !_gameBoard.TryExecuteSplitMove(req.Move, splitMove, playerIndex)) 
             {
                 throw new InvalidMoveException();
@@ -140,7 +140,7 @@ public sealed class ApologiesGame(ApologiesGameConfig config, ImmutableList<Play
         
         var nextGameState = (State)(((int)GameState + 1) % 8);
 
-        var drawAgain = _cardDeck.LastDrawn == CardDeck.CardTypes.Two;
+        var drawAgain = _cardDeck.LastDrawn == CardDeck.Card.Two;
         if (drawAgain && isMoveState) {
             nextGameState = (State)(((int)GameState - 1) % 8);
         }
