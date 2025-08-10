@@ -5,13 +5,14 @@ namespace BoredGames.Games.Warlocks.Deck;
 public class WarlocksDeck
 {
 
-    private List<Card> _cards = [];
+    private readonly List<Card> _cards = [];
+    private const int DeckSize = 60;
     
     public enum Suit
     {
+        None,
         Spades, Hearts,
         Diamonds, Clubs,
-        None
     }
 
     public enum Rank
@@ -52,36 +53,6 @@ public class WarlocksDeck
         {
             return other is not null ? Rank.CompareTo(other.Rank) : 1;
         }
-
-        public static bool operator ==(Card a, Card? b)
-        {
-            return a.CompareTo(b) == 0;
-        }
-
-        public static bool operator !=(Card a, Card b)
-        {
-            return a.CompareTo(b) != 0;
-        }
-
-        public static bool operator >(Card a, Card b)
-        {
-            return a.CompareTo(b) > 0;
-        }
-
-        public static bool operator >=(Card a, Card b)
-        {
-            return a.CompareTo(b) >= 0;
-        }
-
-        public static bool operator <(Card a, Card b)
-        {
-            return a.CompareTo(b) < 0;
-        }
-
-        public static bool operator <=(Card a, Card b)
-        {
-            return a.CompareTo(b) <= 0;
-        }
     }
 
     public WarlocksDeck()
@@ -101,15 +72,18 @@ public class WarlocksDeck
         return _cards.FirstOrDefault();
     }
 
-    private void ResetAndShuffle()
+    public void ResetAndShuffle()
     {
+        if (_cards.Count == DeckSize) return;
+        _cards.Clear();
+        
         // Add default cards
         foreach (var suit in Enum.GetValues<Suit>())
         {
             if (suit == Suit.None) continue;
             foreach (var rank in Enum.GetValues<Rank>())
             {
-                if (rank == Rank.Warlock || rank == Rank.Joker) continue;
+                if (rank is Rank.Warlock or Rank.Joker) continue;
                 _cards.Add(new Card(suit, rank));
             }
         }

@@ -20,11 +20,15 @@ public partial class WarlocksGame
         
         public override void Enter()
         {
+            Game._currentRoundNum++;
+            
             Array.Fill(Game._currentPlayerBids, -1);
             Array.Fill(Game._currentTricksWon, 0);
+            Game._currentTrickNum = 0;
+            
+            Game._deck.ResetAndShuffle();
             DealCards();
             Game._currentTrumpSuit = Game._deck.Peek()?.Suit ?? WarlocksDeck.Suit.None;
-            Game._currentRoundNum++;
         }
 
         public void SetBid(int playerIndex, int bid)
@@ -50,7 +54,7 @@ public partial class WarlocksGame
         private int TrickLeader { get; set; }
         public int CurrentPlayerIndex { get; private set; }
         private readonly List<WarlocksDeck.Card> _trickCards = [];
-        public WarlocksDeck.Suit LeadSuit => _trickCards.FirstOrDefault()?.Suit ?? WarlocksDeck.Suit.None;
+        private WarlocksDeck.Suit LeadSuit => _trickCards.FirstOrDefault()?.Suit ?? WarlocksDeck.Suit.None;
 
         public override string Name => "PlayTrick";
 
@@ -74,6 +78,7 @@ public partial class WarlocksGame
             Game._currentPlayerHands[CurrentPlayerIndex].Remove(card);
             CurrentPlayerIndex = (CurrentPlayerIndex + 1) % Game.Players.Count;
             
+            // Check if the trick is over
             if (_trickCards.Count < Game.Players.Count) return;
             
             // The round is over
@@ -152,8 +157,8 @@ public partial class WarlocksGame
         [Pure]
         public bool IsCardValid(WarlocksDeck.Card card, int playerIndex)
         {
+            if (card.Rank is WarlocksDeck.Rank.Warlock or WarlocksDeck.Rank.Joker) return true;
             if (LeadSuit == WarlocksDeck.Suit.None) return true;
-
             if (Game._currentPlayerHands[playerIndex].Exists(c => c.Suit == LeadSuit)) {
                 return card.Suit == LeadSuit;
             }
