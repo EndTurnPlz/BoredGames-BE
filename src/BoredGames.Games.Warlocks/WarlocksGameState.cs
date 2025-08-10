@@ -121,13 +121,11 @@ public partial class WarlocksGame
             
             // If no cards have the trump check lead suite
             if (trickWinner == -1) {
-                var leadSuit = _trickCards.FirstOrDefault(c => c.Suit == WarlocksDeck.Suit.None)?.Suit 
-                               ?? WarlocksDeck.Suit.None;
                 
-                if (leadSuit != WarlocksDeck.Suit.None) {
+                if (LeadSuit != WarlocksDeck.Suit.None) {
                     trickWinner = _trickCards
                         .Select((c, i) => (c, i))
-                        .Where(p => p.c.Suit == leadSuit)
+                        .Where(p => p.c.Suit == LeadSuit)
                         .OrderByDescending(p => p.c)
                         .FirstOrDefault((c: _trickCards.First(), i: -1)).i;
                 }
