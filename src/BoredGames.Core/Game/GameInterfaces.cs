@@ -8,6 +8,7 @@ public interface IGameSnapshot
     public IEnumerable<string> TurnOrder { get; init; }
 };
 
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers | ImplicitUseTargetFlags.WithInheritors)]
 public interface IGameActionArgs;
 public interface IGameActionResponse;
 
