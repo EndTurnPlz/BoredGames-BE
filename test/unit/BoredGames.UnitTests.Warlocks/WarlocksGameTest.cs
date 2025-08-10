@@ -39,13 +39,20 @@ public class WarlocksGameTest
     {
         // Assert
         Assert.False(_game.HasEnded());
+        
+        // Get the deck via reflection and peek at the top card
+        var deckField = typeof(WarlocksGame).GetField("_deck", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var deck = (WarlocksDeck)deckField!.GetValue(_game)!;
+        var topCard = deck.Peek();
+        Assert.NotNull(topCard);
 
         // Check the first player's snapshot to verify the initial state
         var snapshot = _game.GetSnapshot(_players[0]) as WarlocksBidSnapshot;
         Assert.NotNull(snapshot);
         Assert.Equal("Bid", snapshot.GameState);
         Assert.Equal(1, snapshot.RoundNumber);
-        Assert.Equal(WarlocksDeck.Suit.None, snapshot.TrumpSuite); // Default before first card drawn
+        Assert.Equal(topCard.Suit, snapshot.TrumpSuite); // Default before first card drawn
         Assert.Equal(3, snapshot.TurnOrder.Count());
         Assert.Equal(0, snapshot.PlayerPoints.Sum()); // No points initially
     }
@@ -187,9 +194,9 @@ public class WarlocksGameTest
         var currentPlayerIndex = snapshot.CurrentTrick.CurrentPlayerIndex;
         var wrongPlayer = _players.First(p => _players.IndexOf(p) != currentPlayerIndex);
 
-        // Get a card to play (doesn't matter which one for this test)
+        // Get a card to play
         var wrongPlayerSnapshot = _game.GetSnapshot(wrongPlayer) as WarlocksPlayTrickSnapshot;
-        var cardToPlay = wrongPlayerSnapshot!.ThisPlayerHand.First().card;
+        var cardToPlay = wrongPlayerSnapshot!.ThisPlayerHand.First(p => p.isPlayable).card;
 
         // Act & Assert - Try to play a card with the wrong player
         var playCardMethod = typeof(WarlocksGame).GetMethod("PlayCardAction", 
@@ -220,51 +227,32 @@ public class WarlocksGameTest
         var playCardMethod = typeof(WarlocksGame).GetMethod("PlayCardAction", 
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-        // We'll need to play 3 cards (one for each player)
-        // The first two players play normal cards
-        // The third player plays a Warlock which should win
+        // Get access to the private _currentPlayerHands field
+        var handsField = typeof(WarlocksGame).GetField("_currentPlayerHands", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var hands = (List<WarlocksDeck.Card>[])handsField!.GetValue(_game)!;
+
+        // Give each player specific cards that ensure they can play different suits
+        hands[0].Clear();
+        hands[0].Add(new WarlocksDeck.Card(WarlocksDeck.Suit.Hearts, WarlocksDeck.Rank.Ten));
+
+        hands[1].Clear();
+        hands[1].Add(new WarlocksDeck.Card(WarlocksDeck.Suit.Hearts, WarlocksDeck.Rank.King)); // Trump suit
+
+        hands[2].Clear();
+        hands[2].Add(new WarlocksDeck.Card(WarlocksDeck.Suit.None, WarlocksDeck.Rank.Warlock)); // Different suit
 
         // Find the current player
         var snapshot = _game.GetSnapshot(_players[0]) as WarlocksPlayTrickSnapshot;
         Assert.NotNull(snapshot);
 
         // Play cards for all three players
-        for (var i = 0; i < _players.Count; i++)
-        {
-            // Get the current player's snapshot after each card play
-            var currentSnapshot = _game.GetSnapshot(_players[0]) as WarlocksPlayTrickSnapshot;
-            Assert.NotNull(currentSnapshot);
-
-            var currentPlayerIndex = currentSnapshot.CurrentTrick.CurrentPlayerIndex;
-            var currentPlayer = _players[currentPlayerIndex];
-
-            // Get the player's hand
+        foreach (var currentPlayer in _players) {
             var playerSnapshot = _game.GetSnapshot(currentPlayer) as WarlocksPlayTrickSnapshot;
             Assert.NotNull(playerSnapshot);
 
             // Find a card to play (preferring a Warlock for the last player if available)
-            WarlocksDeck.Card cardToPlay;
-            if (i == _players.Count - 1)
-            {
-                // Try to find a Warlock for the last player
-                cardToPlay = playerSnapshot.ThisPlayerHand
-                    .FirstOrDefault(c => c.card.Rank == WarlocksDeck.Rank.Warlock).card;
-
-                // If no Warlock is available, just play any card
-            }
-            else
-            {
-                // For other players, explicitly avoid playing Warlocks
-                cardToPlay = playerSnapshot.ThisPlayerHand
-                    .FirstOrDefault(c => c.card.Rank != WarlocksDeck.Rank.Warlock).card;
-
-                // If only Warlocks are available, play any card
-            }
-
-            if (cardToPlay == null)
-            {
-                cardToPlay = playerSnapshot.ThisPlayerHand.First().card;
-            }
+            var cardToPlay = playerSnapshot.ThisPlayerHand.First().card;
 
             // Play the card
             var playCardArgs = new ActionArgs.PlayCardArgs { Card = cardToPlay };
@@ -295,7 +283,7 @@ public class WarlocksGameTest
     {
         // Similar to the Warlock test, but we'll control the play to ensure
         // a trump card wins over non-trump cards
-
+        
         // Setup game with controlled bids
         var bidMethod = typeof(WarlocksGame).GetMethod("BidAction", 
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -303,26 +291,32 @@ public class WarlocksGameTest
             var bidArgs = new ActionArgs.BidArgs { Bid = 0 };
             bidMethod!.Invoke(_game, [t, bidArgs]);
         }
-
+        
         // Get the current trump suit
         var initialSnapshot = _game.GetSnapshot(_players[0]) as WarlocksPlayTrickSnapshot;
         Assert.NotNull(initialSnapshot);
         var trumpSuit = initialSnapshot.TrumpSuite;
 
-        // Skip this test if no trump suit is available
-        if (trumpSuit == WarlocksDeck.Suit.None)
-        {
-            return;
-        }
+        // Get access to the private _currentPlayerHands field
+        var handsField = typeof(WarlocksGame).GetField("_currentPlayerHands", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var hands = (List<WarlocksDeck.Card>[])handsField!.GetValue(_game)!;
+
+        // Give each player specific cards that ensure they can play different suits
+        hands[0].Clear();
+        hands[0].Add(new WarlocksDeck.Card(WarlocksDeck.Suit.Hearts, WarlocksDeck.Rank.Ten)); // Lead suit
+
+        hands[1].Clear();
+        hands[1].Add(new WarlocksDeck.Card(trumpSuit, WarlocksDeck.Rank.King)); // Trump suit
+
+        hands[2].Clear();
+        hands[2].Add(new WarlocksDeck.Card(WarlocksDeck.Suit.Clubs, WarlocksDeck.Rank.Ace)); // Different suit
 
         var playCardMethod = typeof(WarlocksGame).GetMethod("PlayCardAction", 
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
         // Play cards for all three players
-        for (var i = 0; i < _players.Count; i++)
-        {
-            // Get the current player's snapshot after each card play
-            var currentSnapshot = _game.GetSnapshot(_players[0]) as WarlocksPlayTrickSnapshot;
+        foreach (var currentSnapshot in _players.Select(player => _game.GetSnapshot(player) as WarlocksPlayTrickSnapshot)) {
             Assert.NotNull(currentSnapshot);
 
             var currentPlayerIndex = currentSnapshot.CurrentTrick.CurrentPlayerIndex;
@@ -333,32 +327,7 @@ public class WarlocksGameTest
             Assert.NotNull(playerSnapshot);
 
             // Find a card to play
-            WarlocksDeck.Card cardToPlay;
-
-            if (i == 1) // The second player tries to play a trump card
-            {
-                // Try to find a trump card
-                cardToPlay = playerSnapshot.ThisPlayerHand
-                    .FirstOrDefault(c => c.card.Suit == trumpSuit && 
-                                    c.card.Rank != WarlocksDeck.Rank.Warlock && 
-                                    c.card.Rank != WarlocksDeck.Rank.Joker).card;
-
-                // If no suitable trump card is available, just play any card
-            }
-            else
-            {
-                // Other players try to avoid playing trump cards
-                cardToPlay = playerSnapshot.ThisPlayerHand
-                    .FirstOrDefault(c => c.card.Suit != trumpSuit && 
-                                    c.card.Rank != WarlocksDeck.Rank.Warlock).card;
-
-                // If only trump cards or Warlocks are available, play any card
-            }
-
-            if (cardToPlay == null)
-            {
-                cardToPlay = playerSnapshot.ThisPlayerHand.First().card;
-            }
+            var cardToPlay = playerSnapshot.ThisPlayerHand.First().card;
 
             // Play the card
             var playCardArgs = new ActionArgs.PlayCardArgs { Card = cardToPlay };
@@ -377,20 +346,19 @@ public class WarlocksGameTest
 
         var noWarlocksPlayed = finalSnapshot.LastTrickResult.Cards.All(c => c.Rank != WarlocksDeck.Rank.Warlock);
 
-        if (trumpCardsPlayed.Any() && noWarlocksPlayed)
-        {
-            // Find the highest trump card played
-            var highestTrump = trumpCardsPlayed.OrderByDescending(c => c.Rank).First();
+        if (trumpCardsPlayed.Count == 0 || !noWarlocksPlayed) return;
+        
+        // Find the highest trump card played
+        var highestTrump = trumpCardsPlayed.OrderByDescending(c => c.Rank).First();
 
-            // Find the index of the player who played it
-            var trumpCardIndex = finalSnapshot.LastTrickResult.Cards
-                .Select((card, index) => new { Card = card, Index = index })
-                .First(item => item.Card.Equals(highestTrump))
-                .Index;
+        // Find the index of the player who played it
+        var trumpCardIndex = finalSnapshot.LastTrickResult.Cards
+            .Select((card, index) => new { Card = card, Index = index })
+            .First(item => item.Card.Equals(highestTrump))
+            .Index;
 
-            var expectedWinnerIndex = (trumpCardIndex + finalSnapshot.LastTrickResult.Leader) % _players.Count;
-            Assert.Equal(expectedWinnerIndex, finalSnapshot.LastTrickResult.Winner);
-        }
+        var expectedWinnerIndex = (trumpCardIndex + finalSnapshot.LastTrickResult.Leader) % _players.Count;
+        Assert.Equal(expectedWinnerIndex, finalSnapshot.LastTrickResult.Winner);
     }
 
     [Fact]
@@ -485,24 +453,25 @@ public class WarlocksGameTest
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
         // Play through 3 rounds (as configured in the test setup)
-        for (var round = 0; round < _config.NumRounds; round++) {
+        for (var round = 1; round <= _config.NumRounds; round++) {
             // All players bid 0 for simplicity
-            foreach (var t in _players) {
-                bidMethod!.Invoke(_game, [t, new ActionArgs.BidArgs { Bid = 0 }]);
+            foreach (var p in _players) {
+                bidMethod!.Invoke(_game, [p, new ActionArgs.BidArgs { Bid = 0 }]);
             }
 
             // Play through the current round (each player plays one card per trick)
-            for (var trick = 0; trick < round + 1; trick++) {
-                foreach (var currentSnapshot in _players.Select(_ => _game.GetSnapshot(_players[0]) as WarlocksPlayTrickSnapshot)) {
-                    Assert.NotNull(currentSnapshot);
+            for (var trick = 1; trick <= round; trick++) {
+                
+                var snapshot = _game.GetSnapshot(_players[0]) as WarlocksPlayTrickSnapshot;
+                Assert.NotNull(snapshot);
+                var trickLeader = snapshot.CurrentTrick.TrickLeader;
 
-                    var currentPlayerIndex = currentSnapshot.CurrentTrick.CurrentPlayerIndex;
-                    var currentPlayer = _players[currentPlayerIndex];
+                for (var i = 0; i < _players.Count; i++) {
+                    var playerIndex = (trickLeader + i) % _players.Count;
+                    var playerSnapshot = _game.GetSnapshot(_players[playerIndex]) as WarlocksPlayTrickSnapshot;
+                    var cardToPlay = playerSnapshot!.ThisPlayerHand.First(p => p.isPlayable).card;
 
-                    var playerSnapshot = _game.GetSnapshot(currentPlayer) as WarlocksPlayTrickSnapshot;
-                    var cardToPlay = playerSnapshot!.ThisPlayerHand.First().card;
-
-                    playCardMethod!.Invoke(_game, [currentPlayer, new ActionArgs.PlayCardArgs { Card = cardToPlay }]);
+                    playCardMethod!.Invoke(_game, [_players[playerIndex], new ActionArgs.PlayCardArgs { Card = cardToPlay }]);
                 }
             }
         }

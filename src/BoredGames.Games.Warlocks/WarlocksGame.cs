@@ -33,7 +33,7 @@ public partial class WarlocksGame : GameBase
         _playerPoints = new int[Players.Count];
         _currentPlayerBids = new int[Players.Count];
         _currentTricksWon = new int[Players.Count];
-        _currentPlayerHands = Enumerable.Repeat(new List<WarlocksDeck.Card>(), Players.Count).ToArray();
+        _currentPlayerHands = Enumerable.Range(0, Players.Count).Select(_ => new List<WarlocksDeck.Card>()).ToArray();
         _state = new BidState(this);
         _state.Enter();
     }
@@ -86,13 +86,13 @@ public partial class WarlocksGame : GameBase
     [GameAction("bid")]
     private void BidAction(Player player, ActionArgs.BidArgs req)
     {
+        if (_state is not BidState bidState) throw new InvalidActionException();
         if (req.Bid < 0 || req.Bid > _currentRoundNum) throw new BadActionArgsException();
         var playerIndex = Players.IndexOf(player);
         if (playerIndex == -1) {
             throw new InvalidPlayerException();
         }
         
-        if (_state is not BidState bidState) throw new InvalidActionException();
         bidState.SetBid(playerIndex, req.Bid);
     }
 
@@ -103,7 +103,7 @@ public partial class WarlocksGame : GameBase
         var playerIndex = Players.IndexOf(player);
         if (playerIndex != playTrickState.CurrentPlayerIndex) throw new InvalidPlayerException();
 
-        if (_currentPlayerHands[playerIndex].Contains(req.Card) 
+        if (!_currentPlayerHands[playerIndex].Contains(req.Card) 
             || !playTrickState.IsCardValid(req.Card, playerIndex)) throw new InvalidMoveException();
         
         playTrickState.PlayCard(req.Card);
