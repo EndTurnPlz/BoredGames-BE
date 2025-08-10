@@ -30,11 +30,12 @@ public partial class WarlocksGame : GameBase
     public WarlocksGame(WarlocksGameConfig config , ImmutableList<Player> players) : base(config, players)
     {
         _config = config;
-        _state = new BidState(this);
         _playerPoints = new int[Players.Count];
         _currentPlayerBids = new int[Players.Count];
         _currentTricksWon = new int[Players.Count];
-        _currentPlayerHands = new List<WarlocksDeck.Card>[Players.Count];
+        _currentPlayerHands = Enumerable.Repeat(new List<WarlocksDeck.Card>(), Players.Count).ToArray();
+        _state = new BidState(this);
+        _state.Enter();
     }
     
     public override bool HasEnded() => _state is EndState;
@@ -45,7 +46,7 @@ public partial class WarlocksGame : GameBase
         var turnOrder = Players.Select(p => p.Username).ToArray();
         var thisPlayerBid = _currentPlayerBids[playerIndex];
         var thisPlayerHand = _currentPlayerHands[playerIndex];
-
+        
         return _state switch
         {
             BidState => new WarlocksBidSnapshot
@@ -64,7 +65,7 @@ public partial class WarlocksGame : GameBase
                 TurnOrder = turnOrder,
                 LastTrickResult = _lastTrickResult,
                 TrumpSuite = _currentTrumpSuit,
-                ThisPlayerHand = thisPlayerHand.Select(c => (c, c.Suit == playTrickState.LeadSuit)),
+                ThisPlayerHand = thisPlayerHand.Select(c => (c, playTrickState.IsCardValid(c, playerIndex))),
                 PlayerPoints = _playerPoints,
                 GameState = _state.Name,
                 RoundNumber = _currentRoundNum,
@@ -103,7 +104,7 @@ public partial class WarlocksGame : GameBase
         if (playerIndex != playTrickState.CurrentPlayerIndex) throw new InvalidPlayerException();
 
         if (_currentPlayerHands[playerIndex].Contains(req.Card) 
-            || !playTrickState.isCardValid(req.Card, playerIndex)) throw new InvalidMoveException();
+            || !playTrickState.IsCardValid(req.Card, playerIndex)) throw new InvalidMoveException();
         
         playTrickState.PlayCard(req.Card);
     }

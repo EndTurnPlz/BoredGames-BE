@@ -5,6 +5,7 @@ namespace BoredGames.Games.Warlocks.Models;
 
 public static class GenericModels
 {
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     public record TrickResult
     {
         public required int Num { get; init; }
@@ -13,6 +14,7 @@ public static class GenericModels
         public required IEnumerable<WarlocksDeck.Card> Cards { get; init; }
     }
     
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     public record CurrentTrickInfo
     {
         public required int TrickLeader { get; init; }

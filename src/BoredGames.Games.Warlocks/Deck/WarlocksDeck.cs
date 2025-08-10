@@ -53,7 +53,7 @@ public class WarlocksDeck
             return other is not null ? Rank.CompareTo(other.Rank) : 1;
         }
 
-        public static bool operator ==(Card a, Card b)
+        public static bool operator ==(Card a, Card? b)
         {
             return a.CompareTo(b) == 0;
         }
