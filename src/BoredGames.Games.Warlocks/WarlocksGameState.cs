@@ -59,7 +59,7 @@ public partial class WarlocksGame
             Game._currentTrickNum++;
             
             if (Game._currentTrickNum is 1) {
-                TrickLeader = Game._currentRoundNum % Game.Players.Count;
+                TrickLeader = (Game._currentRoundNum - 1) % Game.Players.Count;
             }
             else {
                 TrickLeader = Game._lastTrickResult!.Winner;
@@ -150,7 +150,7 @@ public partial class WarlocksGame
         }
         
         [Pure]
-        public bool isCardValid(WarlocksDeck.Card card, int playerIndex)
+        public bool IsCardValid(WarlocksDeck.Card card, int playerIndex)
         {
             if (LeadSuit == WarlocksDeck.Suit.None) return true;
 
