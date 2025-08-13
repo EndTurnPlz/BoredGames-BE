@@ -153,10 +153,10 @@ public class WarlocksGameTest
         // Get the current player's hand
         var currentPlayerSnapshot = _game.GetSnapshot(currentPlayer) as WarlocksPlayTrickSnapshot;
         Assert.NotNull(currentPlayerSnapshot);
-        Assert.NotEmpty(currentPlayerSnapshot.ThisPlayerHand);
+        Assert.NotEmpty(currentPlayerSnapshot.ThisPlayerHandWithInfo);
 
         // Get a valid card to play
-        var cardToPlay = currentPlayerSnapshot.ThisPlayerHand.First().card;
+        var cardToPlay = currentPlayerSnapshot.ThisPlayerHandWithInfo.First().Card;
 
         // Act - Play the card
         var playCardMethod = typeof(WarlocksGame).GetMethod("PlayCardAction", 
@@ -196,7 +196,7 @@ public class WarlocksGameTest
 
         // Get a card to play
         var wrongPlayerSnapshot = _game.GetSnapshot(wrongPlayer) as WarlocksPlayTrickSnapshot;
-        var cardToPlay = wrongPlayerSnapshot!.ThisPlayerHand.First(p => p.isPlayable).card;
+        var cardToPlay = wrongPlayerSnapshot!.ThisPlayerHandWithInfo.First(p => p.IsPlayable).Card;
 
         // Act & Assert - Try to play a card with the wrong player
         var playCardMethod = typeof(WarlocksGame).GetMethod("PlayCardAction", 
@@ -252,7 +252,7 @@ public class WarlocksGameTest
             Assert.NotNull(playerSnapshot);
 
             // Find a card to play (preferring a Warlock for the last player if available)
-            var cardToPlay = playerSnapshot.ThisPlayerHand.First().card;
+            var cardToPlay = playerSnapshot.ThisPlayerHandWithInfo.First().Card;
 
             // Play the card
             var playCardArgs = new ActionArgs.PlayCardArgs { Card = cardToPlay };
@@ -327,7 +327,7 @@ public class WarlocksGameTest
             Assert.NotNull(playerSnapshot);
 
             // Find a card to play
-            var cardToPlay = playerSnapshot.ThisPlayerHand.First().card;
+            var cardToPlay = playerSnapshot.ThisPlayerHandWithInfo.First().Card;
 
             // Play the card
             var playCardArgs = new ActionArgs.PlayCardArgs { Card = cardToPlay };
@@ -391,7 +391,7 @@ public class WarlocksGameTest
             Assert.NotNull(playerSnapshot);
 
             // Play the first card in the player's hand
-            var cardToPlay = playerSnapshot.ThisPlayerHand.First().card;
+            var cardToPlay = playerSnapshot.ThisPlayerHandWithInfo.First().Card;
             playCardMethod!.Invoke(_game, [currentPlayer, new ActionArgs.PlayCardArgs { Card = cardToPlay }]);
         }
 
@@ -469,7 +469,7 @@ public class WarlocksGameTest
                 for (var i = 0; i < _players.Count; i++) {
                     var playerIndex = (trickLeader + i) % _players.Count;
                     var playerSnapshot = _game.GetSnapshot(_players[playerIndex]) as WarlocksPlayTrickSnapshot;
-                    var cardToPlay = playerSnapshot!.ThisPlayerHand.First(p => p.isPlayable).card;
+                    var cardToPlay = playerSnapshot!.ThisPlayerHandWithInfo.First(p => p.IsPlayable).Card;
 
                     playCardMethod!.Invoke(_game, [_players[playerIndex], new ActionArgs.PlayCardArgs { Card = cardToPlay }]);
                 }
