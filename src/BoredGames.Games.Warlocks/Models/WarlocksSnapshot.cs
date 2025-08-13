@@ -23,6 +23,7 @@ public abstract record WarlocksPlayingSnapshot : IGameSnapshot
 
 public record WarlocksBidSnapshot : WarlocksPlayingSnapshot
 {
+    public required IEnumerable<bool> HasPlayerBid { get; init; }
     public required int ThisPlayerBid { get; init; }
     public required IEnumerable<WarlocksDeck.Card> ThisPlayerHand { get; init; }
 }
@@ -31,6 +32,5 @@ public record WarlocksPlayTrickSnapshot : WarlocksPlayingSnapshot
 {
     public required IEnumerable<int> PlayerBids { get; init; }
     public required GenericModels.CurrentTrickInfo CurrentTrick { get; init; }
-    public required IEnumerable<(WarlocksDeck.Card card, bool isPlayable)> ThisPlayerHand { get; init; }
+    public required IEnumerable<GenericModels.CardWithInfo> ThisPlayerHandWithInfo { get; init; }
 }
-

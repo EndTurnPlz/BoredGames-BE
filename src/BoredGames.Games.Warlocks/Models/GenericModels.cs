@@ -22,4 +22,11 @@ public static class GenericModels
         public required WarlocksDeck.Suit LeadSuit { get; init; }
         public required IEnumerable<WarlocksDeck.Card> CardsPlayed { get; init; }
     }
+
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
+    public record CardWithInfo
+    {
+        public required WarlocksDeck.Card Card { get; init; }
+        public required bool IsPlayable { get; init; }
+    }
 }

@@ -46,41 +46,55 @@ public partial class WarlocksGame : GameBase
         var turnOrder = Players.Select(p => p.Username).ToArray();
         var thisPlayerBid = _currentPlayerBids[playerIndex];
         var thisPlayerHand = _currentPlayerHands[playerIndex];
-        
-        return _state switch
-        {
-            BidState => new WarlocksBidSnapshot
+
+        switch (_state) {
+            case BidState:
+                return new WarlocksBidSnapshot
+                {
+                    TurnOrder = turnOrder,
+                    LastTrickResult = _lastTrickResult,
+                    TrumpSuite = _currentTrumpSuit,
+                    HasPlayerBid = _currentPlayerBids.Select(b => b > -1),
+                    ThisPlayerHand = thisPlayerHand,
+                    ThisPlayerBid = thisPlayerBid,
+                    PlayerPoints = _playerPoints,
+                    GameState = _state.Name,
+                    RoundNumber = _currentRoundNum,
+                };
+            
+            case PlayTrickState playTrickState:
             {
-                TurnOrder = turnOrder,
-                LastTrickResult = _lastTrickResult,
-                TrumpSuite = _currentTrumpSuit,
-                ThisPlayerHand = thisPlayerHand,
-                ThisPlayerBid = thisPlayerBid,
-                PlayerPoints = _playerPoints,
-                GameState = _state.Name,
-                RoundNumber = _currentRoundNum,
-            },
-            PlayTrickState playTrickState => new WarlocksPlayTrickSnapshot
-            {
-                TurnOrder = turnOrder,
-                LastTrickResult = _lastTrickResult,
-                TrumpSuite = _currentTrumpSuit,
-                ThisPlayerHand = thisPlayerHand.Select(c => (c, playTrickState.IsCardValid(c, playerIndex))),
-                PlayerPoints = _playerPoints,
-                GameState = _state.Name,
-                RoundNumber = _currentRoundNum,
-                PlayerBids = _currentPlayerBids,
-                CurrentTrick = playTrickState.GetTrickInfo()
-            },
-            EndState => new WarlocksEndSnapshot
-            {
-                TurnOrder = turnOrder,
-                LastTrickResult = _lastTrickResult,
-                PlayerPoints = _playerPoints,
-                GameState = _state.Name,
-            },
-            _ => throw new Exception("Invalid state")
-        };
+                var thisPlayerHandWithInfo = thisPlayerHand.Select(c => new GenericModels.CardWithInfo 
+                {
+                    Card = c, 
+                    IsPlayable = playTrickState.IsCardValid(c, playerIndex)
+                });
+                return new WarlocksPlayTrickSnapshot
+                {
+                    TurnOrder = turnOrder,
+                    LastTrickResult = _lastTrickResult,
+                    TrumpSuite = _currentTrumpSuit,
+                    ThisPlayerHandWithInfo = thisPlayerHandWithInfo,
+                    PlayerPoints = _playerPoints,
+                    GameState = _state.Name,
+                    RoundNumber = _currentRoundNum,
+                    PlayerBids = _currentPlayerBids,
+                    CurrentTrick = playTrickState.GetTrickInfo()
+                };
+            }
+            
+            case EndState:
+                return new WarlocksEndSnapshot
+                {
+                    TurnOrder = turnOrder,
+                    LastTrickResult = _lastTrickResult,
+                    PlayerPoints = _playerPoints,
+                    GameState = _state.Name,
+                };
+            
+            default:
+                throw new Exception("Invalid state");
+        }
     }
     
     [GameAction("bid")]
