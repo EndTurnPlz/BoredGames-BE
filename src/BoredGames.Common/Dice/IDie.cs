@@ -1,4 +1,4 @@
-namespace BoredGames.Core.Game.Components.Dice;
+namespace BoredGames.Common.Dice;
 
 public interface IDie
 {

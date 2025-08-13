@@ -7,7 +7,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\BoredGames.Common\BoredGames.Common.csproj" />
       <ProjectReference Include="..\BoredGames.Core\BoredGames.Core.csproj" />
     </ItemGroup>
 

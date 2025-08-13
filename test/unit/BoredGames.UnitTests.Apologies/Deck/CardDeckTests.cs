@@ -6,9 +6,9 @@ namespace BoredGames.UnitTests.Apologies.Deck;
 [TestSubject(typeof(CardDeck))]
 public class CardDeckTests
 {
-    private static readonly CardDeck.CardTypes[] ValidCardTypes = 
-        Enum.GetValues<CardDeck.CardTypes>()
-            .Where(c => c != CardDeck.CardTypes.Undefined)
+    private static readonly CardDeck.Card[] ValidCardTypes = 
+        Enum.GetValues<CardDeck.Card>()
+            .Where(c => c != CardDeck.Card.Undefined)
             .ToArray();
 
     private static readonly int ExpectedDeckSize = ValidCardTypes.Length * 4;
@@ -18,7 +18,7 @@ public class CardDeckTests
     {
         // Arrange & Act
         var deck = new CardDeck();
-        var drawnCards = new List<CardDeck.CardTypes>();
+        var drawnCards = new List<CardDeck.Card>();
 
         // Draw all cards from the deck
         while (drawnCards.Count < ExpectedDeckSize)
@@ -43,7 +43,7 @@ public class CardDeckTests
         var card = deck.DrawCard();
 
         // Assert
-        Assert.NotEqual(CardDeck.CardTypes.Undefined, card);
+        Assert.NotEqual(CardDeck.Card.Undefined, card);
         Assert.Contains(card, ValidCardTypes);
         Assert.Equal(card, deck.LastDrawn);
     }
@@ -53,7 +53,7 @@ public class CardDeckTests
     {
         // Arrange
         var deck = new CardDeck();
-        var drawnCards = new List<CardDeck.CardTypes>();
+        var drawnCards = new List<CardDeck.Card>();
 
         // Act - Draw several cards
         for (int i = 0; i < 10; i++)
@@ -63,7 +63,7 @@ public class CardDeckTests
 
         // Assert - All cards should be valid
         Assert.All(drawnCards, card => Assert.Contains(card, ValidCardTypes));
-        Assert.All(drawnCards, card => Assert.NotEqual(CardDeck.CardTypes.Undefined, card));
+        Assert.All(drawnCards, card => Assert.NotEqual(CardDeck.Card.Undefined, card));
     }
 
     [Fact]
@@ -71,8 +71,8 @@ public class CardDeckTests
     {
         // Arrange
         var deck = new CardDeck();
-        var firstRoundCards = new List<CardDeck.CardTypes>();
-        var secondRoundCards = new List<CardDeck.CardTypes>();
+        var firstRoundCards = new List<CardDeck.Card>();
+        var secondRoundCards = new List<CardDeck.Card>();
 
         // Act - Draw full deck
         for (int i = 0; i < ExpectedDeckSize; i++) 
@@ -89,7 +89,7 @@ public class CardDeckTests
         // Assert
         Assert.Equal(ExpectedDeckSize, firstRoundCards.Count);
         Assert.Equal(10, secondRoundCards.Count);
-        Assert.All(secondRoundCards, card => Assert.NotEqual(CardDeck.CardTypes.Undefined, card));
+        Assert.All(secondRoundCards, card => Assert.NotEqual(CardDeck.Card.Undefined, card));
         Assert.All(secondRoundCards, card => Assert.Contains(card, ValidCardTypes));
     }
 
@@ -98,8 +98,8 @@ public class CardDeckTests
     {
         // Arrange
         var deck = new CardDeck();
-        var cards = new List<CardDeck.CardTypes>();
-        var cardCounts = new Dictionary<CardDeck.CardTypes, int>();
+        var cards = new List<CardDeck.Card>();
+        var cardCounts = new Dictionary<CardDeck.Card, int>();
 
         // Act - Draw multiple cards to check distribution
         for (int i = 0; i < 20; i++)
@@ -139,7 +139,7 @@ public class CardDeckTests
     {
         // Arrange
         var deck = new CardDeck();
-        var drawnCards = new List<CardDeck.CardTypes>();
+        var drawnCards = new List<CardDeck.Card>();
 
         // Act - Draw more cards than deck size to test reshuffling
         for (int i = 0; i < ExpectedDeckSize + 10; i++)
@@ -149,7 +149,7 @@ public class CardDeckTests
 
         // Assert
         Assert.Equal(ExpectedDeckSize + 10, drawnCards.Count);
-        Assert.All(drawnCards, card => Assert.NotEqual(CardDeck.CardTypes.Undefined, card));
+        Assert.All(drawnCards, card => Assert.NotEqual(CardDeck.Card.Undefined, card));
         Assert.All(drawnCards, card => Assert.Contains(card, ValidCardTypes));
     }
 
@@ -160,6 +160,6 @@ public class CardDeckTests
         var deck = new CardDeck();
 
         // Assert
-        Assert.Equal(CardDeck.CardTypes.Undefined, deck.LastDrawn);
+        Assert.Equal(CardDeck.Card.Undefined, deck.LastDrawn);
     }
 }

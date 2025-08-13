@@ -1,8 +1,8 @@
 ﻿using System.Collections.Immutable;
+using BoredGames.Common.Dice;
 using BoredGames.Core;
 using BoredGames.Core.Game;
 using BoredGames.Core.Game.Attributes;
-using BoredGames.Core.Game.Components.Dice;
 using BoredGames.Games.UpsAndDowns.Board;
 using BoredGames.Games.UpsAndDowns.Models;
 using JetBrains.Annotations;

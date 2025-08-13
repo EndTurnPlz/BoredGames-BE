@@ -2,10 +2,10 @@ namespace BoredGames.Games.Apologies.Deck;
 
 public class CardDeck
 {
-    public CardTypes LastDrawn { get; private set; } = CardTypes.Undefined;
-    private readonly List<CardTypes> _cards = [];
+    public Card LastDrawn { get; private set; } = Card.Undefined;
+    private readonly List<Card> _cards = [];
 
-    public enum CardTypes
+    public enum Card
     {
         Apologies = 0,
         One = 1,
@@ -26,7 +26,7 @@ public class CardDeck
         ResetAndShuffle();
     }
 
-    public CardTypes DrawCard()
+    public Card DrawCard()
     {
         LastDrawn = _cards.First();
         _cards.RemoveAt(0);
@@ -42,16 +42,13 @@ public class CardDeck
         for (var i = 0; i <= 12; i++)
         {
             if (i is 6 or 9) continue;
-            _cards.AddRange(Enumerable.Repeat((CardTypes)i, 4));
+            _cards.AddRange(Enumerable.Repeat((Card)i, 4));
         }
         
         var r = new Random();
-        //Step 1: For each unshuffled item in the collection
         for (var n = _cards.Count - 1; n > 0; --n)
         {
-            //Step 2: Randomly pick an item which has not been shuffled
             var k = r.Next(n + 1);
-            //Step 3: Swap the selected item with the last "unstruck" letter in the collection
             (_cards[n], _cards[k]) = (_cards[k], _cards[n]);
         }
     }
