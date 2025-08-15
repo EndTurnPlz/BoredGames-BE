@@ -38,7 +38,10 @@ if (app.Environment.IsDevelopment()) {
     app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.UseCors("AllowLocalhost3000");
+    app.UseCors("localhost");
+    Console.WriteLine("App is in development mode");
+} else if (app.Environment.IsProduction()) {
+    app.UseCors("prod");
 }
 
 app.MapControllers();
@@ -48,7 +51,10 @@ return;
 
 void ConfigureCors(CorsOptions options)
 {
-    options.AddPolicy("AllowLocalhost3000", cpb => cpb.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+    options.AddPolicy("localhost", cpb => 
+        cpb.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+    options.AddPolicy("prod", cpb => 
+        cpb.WithOrigins("https://endturnplz.github.io").AllowAnyHeader().AllowAnyMethod());
 }
 
 void ConfigureSwagger(SwaggerGenOptions options)
