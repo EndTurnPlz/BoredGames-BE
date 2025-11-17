@@ -121,7 +121,7 @@ public class ApologiesGameTest
     public void DrawCard_ShouldTransitionToMoveState()
     {
         // Arrange
-        var game = CreateGameWithCards([CardDeck.CardTypes.One]);
+        var game = CreateGameWithCards([CardDeck.Card.One]);
 
         // Act
         game.ExecuteAction("draw", _players[0]);
@@ -135,7 +135,7 @@ public class ApologiesGameTest
     public void MovePawn_ShouldTransitionToNextPlayerDrawState()
     {
         // Arrange
-        var game = CreateGameWithCards([CardDeck.CardTypes.One]);
+        var game = CreateGameWithCards([CardDeck.Card.One]);
         game.ExecuteAction("draw", _players[0]);
         var movesets = game.GetSnapshot(_players[0]).CurrentMoveset!;
         var moveOpt = movesets.ElementAt(0).Opts.ElementAt(0);
@@ -153,7 +153,7 @@ public class ApologiesGameTest
     public void GameCompletion_ShouldTransitionToEndState()
     {
         // Arrange
-        var game = CreateGameWithCards([CardDeck.CardTypes.One]);
+        var game = CreateGameWithCards([CardDeck.Card.One]);
         var gameBoard = (GameBoard)typeof(ApologiesGame)
             .GetField("_gameBoard", BindingFlags.NonPublic | BindingFlags.Instance)
             ?.GetValue(game)!;
@@ -179,7 +179,7 @@ public class ApologiesGameTest
     public void TwoCard_ShouldLetSamePlayerMoveTwice()
     {
         // Arrange
-        var game = CreateGameWithCards([CardDeck.CardTypes.Two]);
+        var game = CreateGameWithCards([CardDeck.Card.Two]);
         var gameBoard = (GameBoard)typeof(ApologiesGame)
             .GetField("_gameBoard", BindingFlags.NonPublic | BindingFlags.Instance)
             ?.GetValue(game)!;
@@ -201,7 +201,7 @@ public class ApologiesGameTest
     public void InvalidMove_ShouldMaintainCurrentMoveState()
     {
         // Arrange
-        var game = CreateGameWithCards([CardDeck.CardTypes.Two]);
+        var game = CreateGameWithCards([CardDeck.Card.Two]);
         typeof(ApologiesGame)
             .GetProperty("GameState", BindingFlags.NonPublic | BindingFlags.Instance)
             ?.SetValue(game, ApologiesGame.State.P1Draw);
@@ -217,13 +217,13 @@ public class ApologiesGameTest
         Assert.Equal(ApologiesGame.State.P1Move, snapshot.GameState);
     }
     
-    private ApologiesGame CreateGameWithCards(IEnumerable<CardDeck.CardTypes> cards)
+    private ApologiesGame CreateGameWithCards(IEnumerable<CardDeck.Card> cards)
     {
         var config = new ApologiesGameConfig { ShuffleTurnOrder = false };
         var game = new ApologiesGame(config, _players);
         var cardDeck = new CardDeck();
         typeof(CardDeck).GetField("_cards", BindingFlags.NonPublic | BindingFlags.Instance)
-            ?.SetValue(cardDeck, new List<CardDeck.CardTypes>(cards));
+            ?.SetValue(cardDeck, new List<CardDeck.Card>(cards));
         typeof(ApologiesGame).GetField("_cardDeck", BindingFlags.NonPublic | BindingFlags.Instance)
             ?.SetValue(game, cardDeck);
         return game;

@@ -23,11 +23,11 @@ public class GameBoardTest
     }
 
     [Theory]
-    [InlineData(0, CardDeck.CardTypes.One)]
-    [InlineData(1, CardDeck.CardTypes.Two)]
-    [InlineData(2, CardDeck.CardTypes.Seven)]
-    [InlineData(3, CardDeck.CardTypes.Eleven)]
-    public void GetValidMovesForPlayer_ValidScenario_ShouldReturnMoves(int playerIndex, CardDeck.CardTypes card)
+    [InlineData(0, CardDeck.Card.One)]
+    [InlineData(1, CardDeck.Card.Two)]
+    [InlineData(2, CardDeck.Card.Seven)]
+    [InlineData(3, CardDeck.Card.Eleven)]
+    public void GetValidMovesForPlayer_ValidScenario_ShouldReturnMoves(int playerIndex, CardDeck.Card card)
     {
         var moves = _gameBoard.GetValidMovesForPlayer(playerIndex, card);
         Assert.NotNull(moves);
@@ -35,10 +35,10 @@ public class GameBoardTest
     }
 
     [Theory]
-    [InlineData(-1, CardDeck.CardTypes.One)]
-    [InlineData(4, CardDeck.CardTypes.Seven)]
+    [InlineData(-1, CardDeck.Card.One)]
+    [InlineData(4, CardDeck.Card.Seven)]
     public void GetValidMovesForPlayer_InvalidPlayerIndex_ShouldThrowIndexOutOfRangeException(
-        int playerIndex, CardDeck.CardTypes card)
+        int playerIndex, CardDeck.Card card)
     {
         Assert.Throws<IndexOutOfRangeException>(() => _gameBoard.GetValidMovesForPlayer(playerIndex, card));
     }
@@ -90,7 +90,7 @@ public class GameBoardTest
         _gameBoard.PawnTiles[0][0] = BoardTileDfs(_gameBoard, "a_4")!;
 
         // Act
-        var result = _gameBoard.TryExecuteMovePawn(move, CardDeck.CardTypes.Two, 0);
+        var result = _gameBoard.TryExecuteMovePawn(move, CardDeck.Card.Two, 0);
 
         // Assert
         Assert.True(result);
@@ -114,7 +114,7 @@ public class GameBoardTest
         var player1StartTile = BoardTileDfs(_gameBoard, "b_S")!;
 
         // Act
-        var result = _gameBoard.TryExecuteMovePawn(move, CardDeck.CardTypes.Two, 0);
+        var result = _gameBoard.TryExecuteMovePawn(move, CardDeck.Card.Two, 0);
 
         // Assert
         Assert.True(result);
@@ -129,7 +129,7 @@ public class GameBoardTest
         var move = new GenericModels.Move("a_4", "a_6", moveEffect);
         _gameBoard.PawnTiles[0][0] = BoardTileDfs(_gameBoard, "a_6")!;
 
-        var result = _gameBoard.TryExecuteMovePawn(move, CardDeck.CardTypes.Two, 0);
+        var result = _gameBoard.TryExecuteMovePawn(move, CardDeck.Card.Two, 0);
         Assert.False(result);
     }
 
@@ -138,7 +138,7 @@ public class GameBoardTest
     {
         // Arrange
         const string sourceTileName = "a_10";
-        const CardDeck.CardTypes card = CardDeck.CardTypes.Apologies;
+        const CardDeck.Card card = CardDeck.Card.Apologies;
         const int playerIndex = 0;
 
         var sourceTile = BoardTileDfs(_gameBoard, sourceTileName)!;
@@ -158,7 +158,7 @@ public class GameBoardTest
     {
         // Arrange
         const string sourceTileName = "a_10";
-        const CardDeck.CardTypes card = CardDeck.CardTypes.Eleven;
+        const CardDeck.Card card = CardDeck.Card.Eleven;
         const int playerIndex = 0;
 
         var sourceTile = BoardTileDfs(_gameBoard, sourceTileName)!;
@@ -178,7 +178,7 @@ public class GameBoardTest
     {
         // Arrange
         const string sourceTileName = "a_10";
-        const CardDeck.CardTypes card = CardDeck.CardTypes.Seven;
+        const CardDeck.Card card = CardDeck.Card.Seven;
         const int playerIndex = 0;
 
         var sourceTile = BoardTileDfs(_gameBoard, sourceTileName)!;
@@ -266,12 +266,12 @@ public class GameBoardTest
     
     
     [Theory]
-    [InlineData("a_S", "a_4", "ExitStart", CardDeck.CardTypes.One, 0)]
-    [InlineData("a_4", "a_6", "Forward", CardDeck.CardTypes.Two, 0)]
-    [InlineData("a_6", "a_2", "Backward", CardDeck.CardTypes.Four, 0)]
-    [InlineData("a_6", "a_5", "Backward", CardDeck.CardTypes.Ten, 0)]
+    [InlineData("a_S", "a_4", "ExitStart", CardDeck.Card.One, 0)]
+    [InlineData("a_4", "a_6", "Forward", CardDeck.Card.Two, 0)]
+    [InlineData("a_6", "a_2", "Backward", CardDeck.Card.Four, 0)]
+    [InlineData("a_6", "a_5", "Backward", CardDeck.Card.Ten, 0)]
     public void ValidateAndFindDestinationTile_ValidMove_ShouldReturnDestinationTile(
-        string sourceTileName, string destTileName, string effectName, CardDeck.CardTypes cardType, int playerIndex)
+        string sourceTileName, string destTileName, string effectName, CardDeck.Card card, int playerIndex)
     {
         // Arrange
         var sourceTile = BoardTileDfs(_gameBoard, sourceTileName)!;
@@ -281,7 +281,7 @@ public class GameBoardTest
 
         // Act
         var result = GetPrivateMethodResult<BoardTile>(
-            "ValidateAndFindDestinationTile", sourceTile, move, cardType, playerIndex);
+            "ValidateAndFindDestinationTile", sourceTile, move, card, playerIndex);
 
         // Assert
         Assert.NotNull(result);
@@ -289,11 +289,11 @@ public class GameBoardTest
     }
 
     [Theory]
-    [InlineData("a_4", "a_6", "Forward", CardDeck.CardTypes.One, 0, typeof(InvalidDataException))]
-    [InlineData("a_S", "a_10", "ExitStart", CardDeck.CardTypes.Three, 0, typeof(InvalidDataException))]
-    [InlineData("a_6", "a_5", "Backward", CardDeck.CardTypes.Two, 0, typeof(InvalidDataException))]
+    [InlineData("a_4", "a_6", "Forward", CardDeck.Card.One, 0, typeof(InvalidDataException))]
+    [InlineData("a_S", "a_10", "ExitStart", CardDeck.Card.Three, 0, typeof(InvalidDataException))]
+    [InlineData("a_6", "a_5", "Backward", CardDeck.Card.Two, 0, typeof(InvalidDataException))]
     public void ValidateAndFindDestinationTile_InvalidMove_ShouldThrowException(
-        string sourceTileName, string destTileName, string effectName, CardDeck.CardTypes cardType, 
+        string sourceTileName, string destTileName, string effectName, CardDeck.Card card, 
         int playerIndex, Type expectedExceptionType)
     {
         // Arrange
@@ -304,25 +304,25 @@ public class GameBoardTest
 
         // Act & Assert
         var ex = Assert.Throws<TargetInvocationException>(() => GetPrivateMethodResult<BoardTile>(
-            "ValidateAndFindDestinationTile", sourceTile, move, cardType, playerIndex));
+            "ValidateAndFindDestinationTile", sourceTile, move, card, playerIndex));
         Assert.IsType(expectedExceptionType, ex.InnerException);
     }
 
 
     [Theory]
-    [InlineData("a_4", CardDeck.CardTypes.One, 0, 1, "a_5")]
-    [InlineData("a_4", CardDeck.CardTypes.Two, 0, 1, "a_6")]
-    [InlineData("a_4", CardDeck.CardTypes.Three, 0, 1, "a_7")]
-    [InlineData("a_10", CardDeck.CardTypes.Four, 0, 0, null)]
-    [InlineData("a_10", CardDeck.CardTypes.Five, 0, 1, "a_15")]
-    [InlineData("a_10", CardDeck.CardTypes.Seven, 0, 1, "b_2")]
-    [InlineData("a_10", CardDeck.CardTypes.Eight, 0, 1, "b_3")]
-    [InlineData("a_10", CardDeck.CardTypes.Ten, 0, 1, "b_5")]
-    [InlineData("a_10", CardDeck.CardTypes.Eleven, 0, 1, "b_6")]
-    [InlineData("a_10", CardDeck.CardTypes.Twelve, 0, 1, "b_7")]
-    [InlineData("a_10", CardDeck.CardTypes.Apologies, 0, 0, null)]
+    [InlineData("a_4", CardDeck.Card.One, 0, 1, "a_5")]
+    [InlineData("a_4", CardDeck.Card.Two, 0, 1, "a_6")]
+    [InlineData("a_4", CardDeck.Card.Three, 0, 1, "a_7")]
+    [InlineData("a_10", CardDeck.Card.Four, 0, 0, null)]
+    [InlineData("a_10", CardDeck.Card.Five, 0, 1, "a_15")]
+    [InlineData("a_10", CardDeck.Card.Seven, 0, 1, "b_2")]
+    [InlineData("a_10", CardDeck.Card.Eight, 0, 1, "b_3")]
+    [InlineData("a_10", CardDeck.Card.Ten, 0, 1, "b_5")]
+    [InlineData("a_10", CardDeck.Card.Eleven, 0, 1, "b_6")]
+    [InlineData("a_10", CardDeck.Card.Twelve, 0, 1, "b_7")]
+    [InlineData("a_10", CardDeck.Card.Apologies, 0, 0, null)]
     public void FindTileForForwardMove_ValidScenario_ShouldReturnCorrectTiles(
-        string sourceTileName, CardDeck.CardTypes card, int playerIndex, int expectedTileCount, string? destTileName)
+        string sourceTileName, CardDeck.Card card, int playerIndex, int expectedTileCount, string? destTileName)
     {
         // Arrange
         var sourceTile = BoardTileDfs(_gameBoard, sourceTileName)!;
@@ -347,12 +347,12 @@ public class GameBoardTest
     }
 
     [Theory]
-    [InlineData("a_10", CardDeck.CardTypes.Four, 0, 1, "a_6")]
-    [InlineData("a_5", CardDeck.CardTypes.One, 0, 0, null)]
-    [InlineData("a_5", CardDeck.CardTypes.Four, 0, 1, "a_1")]
-    [InlineData("a_5", CardDeck.CardTypes.Ten, 0, 1, "a_4")]
+    [InlineData("a_10", CardDeck.Card.Four, 0, 1, "a_6")]
+    [InlineData("a_5", CardDeck.Card.One, 0, 0, null)]
+    [InlineData("a_5", CardDeck.Card.Four, 0, 1, "a_1")]
+    [InlineData("a_5", CardDeck.Card.Ten, 0, 1, "a_4")]
     public void FindTileForBackwardMove_ValidScenario_ShouldReturnCorrectTiles(
-        string sourceTileName, CardDeck.CardTypes card, int playerIndex, int expectedTileCount, string? destTileName)
+        string sourceTileName, CardDeck.Card card, int playerIndex, int expectedTileCount, string? destTileName)
     {
         // Arrange
         var sourceTile = BoardTileDfs(_gameBoard, sourceTileName)!;
@@ -368,11 +368,11 @@ public class GameBoardTest
     }
 
     [Theory]
-    [InlineData("a_S", CardDeck.CardTypes.One, 0, 1)]
-    [InlineData("a_S", CardDeck.CardTypes.Two, 0, 1)]
-    [InlineData("a_S", CardDeck.CardTypes.Apologies, 0, 0)]
+    [InlineData("a_S", CardDeck.Card.One, 0, 1)]
+    [InlineData("a_S", CardDeck.Card.Two, 0, 1)]
+    [InlineData("a_S", CardDeck.Card.Apologies, 0, 0)]
     public void FindTileForExitStartMove_ValidScenario_ShouldReturnCorrectTiles(
-        string sourceTileName, CardDeck.CardTypes card, int playerIndex, int expectedTileCount)
+        string sourceTileName, CardDeck.Card card, int playerIndex, int expectedTileCount)
     {
         // Arrange
         var sourceTile = BoardTileDfs(_gameBoard, sourceTileName)!;
