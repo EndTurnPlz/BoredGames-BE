@@ -51,7 +51,7 @@ void ConfigureCors(CorsOptions options)
 {
     options.AddPolicy("AllowLocalhost3000", cpb => cpb.WithOrigins("http://localhost:5000")
                                                         .AllowAnyHeader().AllowAnyMethod());
-    options.AddPolicy("AllowGHPages", cpb => cpb.WithOrigins("https://boredgames.endturnplz.win")
+    options.AddPolicy("AllowGHPages", cpb => cpb.WithOrigins("https://endturnplz.github.io/")
                                                         .AllowAnyHeader().AllowAnyMethod());
 }
 
