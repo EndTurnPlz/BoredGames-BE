@@ -2,7 +2,7 @@
 
 A real-time multiplayer board game platform built with ASP.NET Core, featuring WebSocket-based gameplay and extensible game architecture.
 
-> **Note:** The public server is currently offline due to cloud computing costs. Follow the instructions below to run the application locally.
+> [Play Here!](https://endturnplz.github.io/BoredGames-FR)
 
 ## Overview
 
