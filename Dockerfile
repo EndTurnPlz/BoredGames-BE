@@ -18,5 +18,5 @@ RUN dotnet publish "/src/BoredGames.Api/BoredGames.Api.csproj" -c $BUILD_CONFIGU
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ARG ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_ENVIRONMENT=Production
 ENTRYPOINT ["dotnet", "BoredGames.Api.dll"]
