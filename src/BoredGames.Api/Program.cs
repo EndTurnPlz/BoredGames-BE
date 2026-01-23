@@ -39,6 +39,8 @@ if (app.Environment.IsDevelopment()) {
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseCors("AllowLocalhost3000");
+}
+else if (app.Environment.IsProduction()) {
     app.UseCors("AllowGHPages");
 }
 
@@ -51,7 +53,7 @@ void ConfigureCors(CorsOptions options)
 {
     options.AddPolicy("AllowLocalhost3000", cpb => cpb.WithOrigins("http://localhost:5000")
                                                         .AllowAnyHeader().AllowAnyMethod());
-    options.AddPolicy("AllowGHPages", cpb => cpb.WithOrigins("https://endturnplz.github.io/")
+    options.AddPolicy("AllowGHPages", cpb => cpb.WithOrigins("https://endturnplz.github.io")
                                                         .AllowAnyHeader().AllowAnyMethod());
 }
 
