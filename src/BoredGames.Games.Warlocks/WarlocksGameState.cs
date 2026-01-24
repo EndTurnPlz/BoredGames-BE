@@ -54,7 +54,12 @@ public partial class WarlocksGame
         private int TrickLeader { get; set; }
         public int CurrentPlayerIndex { get; private set; }
         private readonly List<WarlocksDeck.Card> _trickCards = [];
-        private WarlocksDeck.Suit LeadSuit => _trickCards.FirstOrDefault()?.Suit ?? WarlocksDeck.Suit.None;
+        private WarlocksDeck.Suit LeadSuit
+        {
+            get {
+                return _trickCards.FirstOrDefault(c => c.Rank != WarlocksDeck.Rank.Joker)?.Suit ?? WarlocksDeck.Suit.None;
+            }
+        }
 
         public override string Name => "PlayTrick";
 
@@ -110,7 +115,9 @@ public partial class WarlocksGame
             
             // Search for the highest trump suite card if no warlocks
             if (trickWinner == -1) {
-                if (_trickCards.Exists(c => c.Suit == Game._currentTrumpSuit)) {
+                if (Game._currentTrumpSuit != WarlocksDeck.Suit.None
+                    && _trickCards.Exists(c => c.Suit == Game._currentTrumpSuit)) 
+                {
                     trickWinner = _trickCards
                         .Select((c, i) => (c, i))
                         .Where(p => p.c.Suit == Game._currentTrumpSuit)
