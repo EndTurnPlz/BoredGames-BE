@@ -485,7 +485,7 @@ public class WarlocksGameTest
     }
 
     [Fact]
-    public void TrickWinner_JokerAsFirstCard_DoesNotWinUnlessAllCardsAreJokers()
+    public void TrickWinner_JokerAsFirstCard_DoesNotWin()
     {
         // Setup game with controlled bids
         var bidMethod = typeof(WarlocksGame).GetMethod("BidAction",
@@ -546,5 +546,68 @@ public class WarlocksGameTest
         Assert.Equal(WarlocksDeck.Rank.Joker, finalSnapshot.LastTrickResult.Cards.ElementAt(0).Rank);
         Assert.Equal(WarlocksDeck.Rank.King, finalSnapshot.LastTrickResult.Cards.ElementAt(1).Rank);
         Assert.Equal(WarlocksDeck.Rank.Ace, finalSnapshot.LastTrickResult.Cards.ElementAt(2).Rank);
+    }
+    
+    [Fact]
+    public void TrickWinner_AllJokersPlayed()
+    {
+        // Setup game with controlled bids
+        var bidMethod = typeof(WarlocksGame).GetMethod("BidAction",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        foreach (var t in _players) {
+            var bidArgs = new ActionArgs.BidArgs { Bid = 0 };
+            bidMethod!.Invoke(_game, [t, bidArgs]);
+        }
+
+        // Get access to the private _currentPlayerHands field
+        var handsField = typeof(WarlocksGame).GetField("_currentPlayerHands",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var hands = (List<WarlocksDeck.Card>[])handsField!.GetValue(_game)!;
+
+        // Set up the scenario: Joker as first card, then regular cards
+        hands[0].Clear();
+        hands[0].Add(new WarlocksDeck.Card(WarlocksDeck.Suit.None, WarlocksDeck.Rank.Joker)); // First player plays Joker
+
+        hands[1].Clear();
+        hands[1].Add(new WarlocksDeck.Card(WarlocksDeck.Suit.None, WarlocksDeck.Rank.Joker)); // Second player plays Hearts King
+
+        hands[2].Clear();
+        hands[2].Add(new WarlocksDeck.Card(WarlocksDeck.Suit.None, WarlocksDeck.Rank.Joker)); // Third player plays Hearts Ace
+
+        var playCardMethod = typeof(WarlocksGame).GetMethod("PlayCardAction",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        // Play cards for all three players
+        foreach (var currentSnapshot in _players.Select(player => _game.GetSnapshot(player) as WarlocksPlayTrickSnapshot)) {
+            Assert.NotNull(currentSnapshot);
+
+            var currentPlayerIndex = currentSnapshot.CurrentTrick.CurrentPlayerIndex;
+            var currentPlayer = _players[currentPlayerIndex];
+
+            // Get the player's hand
+            var playerSnapshot = _game.GetSnapshot(currentPlayer) as WarlocksPlayTrickSnapshot;
+            Assert.NotNull(playerSnapshot);
+
+            // Find a card to play
+            var cardToPlay = playerSnapshot.ThisPlayerHandWithInfo.First().Card;
+
+            // Play the card
+            var playCardArgs = new ActionArgs.PlayCardArgs { Card = cardToPlay };
+            playCardMethod!.Invoke(_game, [currentPlayer, playCardArgs]);
+        }
+
+        // Get the last trick result
+        var finalSnapshot = _game.GetSnapshot(_players[0]) as WarlocksPlayingSnapshot;
+        Assert.NotNull(finalSnapshot);
+        Assert.NotNull(finalSnapshot.LastTrickResult);
+
+        // Verify that the first card (player index 0) did win the trick
+        var expectedWinnerIndex = 0;
+        Assert.Equal(expectedWinnerIndex, finalSnapshot.LastTrickResult.Winner);
+
+        // Verify the cards played are as expected
+        Assert.Equal(WarlocksDeck.Rank.Joker, finalSnapshot.LastTrickResult.Cards.ElementAt(0).Rank);
+        Assert.Equal(WarlocksDeck.Rank.Joker, finalSnapshot.LastTrickResult.Cards.ElementAt(1).Rank);
+        Assert.Equal(WarlocksDeck.Rank.Joker, finalSnapshot.LastTrickResult.Cards.ElementAt(2).Rank);
     }
 }
