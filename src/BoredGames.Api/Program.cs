@@ -51,8 +51,7 @@ return;
 
 void ConfigureCors(CorsOptions options)
 {
-    options.AddPolicy("AllowLocalhost3000", cpb => cpb.WithOrigins("http://localhost:5000")
-                                                        .AllowAnyHeader().AllowAnyMethod());
+    options.AddPolicy("AllowLocalhost3000", cpb => cpb.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
     options.AddPolicy("AllowGHPages", cpb => cpb.WithOrigins("https://endturnplz.github.io")
                                                         .AllowAnyHeader().AllowAnyMethod());
 }
