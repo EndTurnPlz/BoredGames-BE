@@ -182,10 +182,8 @@ public class GameRoom
                 _pendingPlayers.Clear();
             }
             
-            var expiredPlayers = _pendingPlayers.Where(p => DateTime.Now - p.CreatedAt > TimeSpan.FromSeconds(10));
-            foreach (var expiredPlayer in expiredPlayers) {
-                _pendingPlayers.Remove(expiredPlayer);
-            }
+            var now = DateTime.Now;
+            _pendingPlayers.RemoveAll(p => now - p.CreatedAt > TimeSpan.FromSeconds(10));
         }   
     }
 }

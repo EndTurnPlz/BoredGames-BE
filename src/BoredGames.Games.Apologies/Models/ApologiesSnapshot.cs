@@ -7,7 +7,7 @@ public record ApologiesSnapshot : IGameSnapshot
 {
     public required IEnumerable<string> TurnOrder { get; init; }
     public required ApologiesGame.State GameState { get; init; }
-    public required CardDeck.CardTypes LastDrawnCard { get; init; }
+    public required CardDeck.Card LastDrawnCard { get; init; }
     public required ActionArgs.MovePawnArgs? LastCompletedMove { get; init; }
     public required GenericModels.GameStats GameStats { get; init; }
     public required IEnumerable<IEnumerable<string>> Pieces { get; init; }
